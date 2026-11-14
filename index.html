@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sefer Sırası</title>
+<style>
+body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0;padding:12px;background:#10151c;color:#e8edf3;font-size:18px}
+h2,h3{margin:12px 0 6px}
+.sekmeler{display:flex;gap:6px;margin-bottom:6px}
+.sekmeler button{flex:1;padding:14px;font-size:18px;border:0;border-radius:10px;background:#243040;color:#cfd8e3}
+.sekmeler button.aktif{background:#1fa36a;color:#fff;font-weight:bold}
+.gunler button.aktif{background:#2f6fd6}
+label{display:block;margin-top:10px;color:#9fb0c3}
+textarea{width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px;border:1px solid #3a4a5e;background:#1a222d;color:#fff}
+.arac{display:flex;gap:8px;align-items:center;margin:6px 0}
+.arac span{width:64px;font-weight:bold;font-size:20px}
+.arac select{flex:1;font-size:18px;padding:10px;border-radius:8px;background:#1a222d;color:#fff;border:1px solid #3a4a5e}
+.arac input{width:28px;height:28px}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:18px}
+th{background:#243040;text-align:left}
+th,td{padding:10px 8px;border-bottom:1px solid #2c3a4b}
+tr.uyari td{background:#5a2328}
+tr.bos td{background:#4a3d12}
+button.ana{padding:16px;font-size:20px;background:#1fa36a;color:#fff;border:0;border-radius:10px;width:100%;margin:12px 0}
+.kucuk{color:#9fb0c3;font-size:15px}
+</style>
+</head>
+<body>
+<div class="sekmeler gunler">
+<button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
+<button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
+<button id="g_paz" onclick="gunSec('paz')">Pazar</button>
+</div>
+<div class="sekmeler gunler">
+<button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
+<button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
+</div>
+<div class="sekmeler">
+<button id="bMim" class="aktif" onclick="sekme('mim')">Mimarsinan</button>
+<button id="bMur" onclick="sekme('mur')">Muratçeşme</button>
+</div>
+<div style="margin:6px 0"><label>Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)" style="font-size:18px;padding:8px;width:100%;box-sizing:border-box;border-radius:8px"></div>
+<div class="sekmeler"><button onclick="veriKopyala()">Verileri kopyala</button><button onclick="veriYapistir()">Verileri yapıştır</button></div>
+<div id="alan"></div>
+<div id="bulut" class="kucuk" style="text-align:center;margin:10px 0"></div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const t=(h,m,s=0)=>h*3600+m*60+s;
+const fmt=x=>{const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+(s?':'+String(s).padStart(2,'0'):'')};
+const ADLAR={nobetci:'Nöbetçi',dokuzcu:'Dokuzcu',takviye:'Takviye'};
+const GUNAD={hi:'Hafta içi',cmt:'Cumartesi',paz:'Pazar'};
+const mimTur=s=>((s>=t(7,24)&&s<t(8,30))||(s>=t(15,0)&&s<t(19,0)))?71*60:65*60;
+const MIM={ad:'Mimarsinan',son:t(23,0),tur:mimTur,turler:['nobetci','dokuzcu','takviye'],sinir:{nobetci:t(23,0),dokuzcu:t(20,45),takviye:t(19,30)}};
+const MUR={ad:'Muratçeşme',son:t(22,0),tur:s=>45*60,turler:['nobetci','takviye'],sinir:{nobetci:t(22,0),takviye:t(19,30)}};
+const GUN={
+ hi:{
+  mim:{sabah:[[5,54],[6,2],[6,10],[6,17],[6,25],[6,32,30],[6,40],[6,48],[6,54],[7,0],[7,6],[7,12],[7,18],[7,24],[7,30]],
+   bant:[[t(7,30),t(8,30),300],[t(8,30),t(15,0),450],[t(15,0),t(19,0),360],[t(19,0),t(20,15),450],[t(20,15),t(21,45),600],[t(21,45),t(23,0),900]]},
+  mur:{sabah:[[6,15],[6,30],[6,45],[7,0],[7,10],[7,20],[7,30]],
+   bant:[[t(7,30),t(8,30),450],[t(8,30),t(19,0),600],[t(19,0),t(22,0),900]]}},
+ cmt:{
+  mim:{sabah:[[6,5],[6,15],[6,25],[6,35],[6,45],[6,52,30],[7,0],[7,7,30],[7,15],[7,22,30],[7,30],[7,37,30],[7,45],[7,52,30],[8,0]],
+   bant:[[t(8,0),t(20,15),450],[t(20,15),t(21,45),600],[t(21,45),t(23,0),900]]},
+  mur:{sabah:[[6,30],[6,45],[7,0],[7,10],[7,20],[7,30],[7,40]],
+   bant:[[t(7,40),t(9,0),600],[t(9,0),t(22,0),900]]}},
+ paz:{
+  mim:{sabah:[[6,10],[6,20],[6,30],[6,40],[6,50],[7,0],[7,10],[7,20],[7,30],[7,40],[7,50],[8,0],[8,10],[8,20],[8,30],[8,40]],
+   bant:[[t(8,40),t(10,0),600],[t(10,0),t(20,15),450],[t(20,15),t(21,45),600],[t(21,45),t(23,0),900]]},
+  mur:{sabah:[[6,30],[6,45],[7,0],[7,15],[7,30],[7,45]],
+   bant:[[t(7,45),t(22,0),900]]}}
+};
+function ayar(){return Object.assign({},simdi=='mim'?MIM:MUR,GUN[gun][simdi])}
+function seferler(a){
+ const o=a.sabah.map(x=>t(...x));let c=o[o.length-1];
+ for(const b of a.bant){for(;;){const n=c+b[2];if(n>b[1])break;o.push(n);c=n}}
+ return o.filter(x=>x<=a.son);
+}
+const bugun=new Date().getDay();
+let gun=bugun==6?'cmt':(bugun==0?'paz':'hi');
+let simdi='mim';
+let mevsim=(new Date().getMonth()>=4&&new Date().getMonth()<=8)?'yaz':'kis';
+let kilit=false;
+const durum={mim:{plakalar:'',tur:{},ariza:{}},mur:{plakalar:'',tur:{},ariza:{}}};
+function oku(){
+ if(kilit)return;
+ const d=durum[simdi];const e=document.getElementById('liste');
+ if(e)d.plakalar=e.value;
+ document.querySelectorAll('[data-tur]').forEach(x=>{d.tur[x.dataset.tur]=x.value});
+ document.querySelectorAll('[data-ariza]').forEach(x=>{d.ariza[x.dataset.ariza]=x.checked});
+ if(!d.ortak)d.ortak={};document.querySelectorAll('[data-ortak]').forEach(x=>{d.ortak[x.dataset.ortak]=x.checked});
+ if(!d.yok)d.yok={};document.querySelectorAll('[data-yokb]').forEach(x=>{const p=x.dataset.yokb;d.yok[p]=d.yok[p]||{};d.yok[p].b=x.value});document.querySelectorAll('[data-yoks]').forEach(x=>{const p=x.dataset.yoks;d.yok[p]=d.yok[p]||{};d.yok[p].s=x.value});
+}
+function plakaListesi(){return durum[simdi].plakalar.split(/[\s,;]+/).filter(x=>x)}
+function gunButon(){for(const k of ['yaz','kis'])document.getElementById('m_'+k).className=k==mevsim?'aktif':'';for(const k of ['hi','cmt','paz'])document.getElementById('g_'+k).className=k==gun?'aktif':''}
+function otoAta(){
+ const d=durum.mim;const N=mevsim=='yaz'?8:7;
+ const pl=plakaListesi().filter(p=>!d.ariza[p]&&d.tur[p]!='takviye');
+ pl.forEach((p,i)=>{d.tur[p]=(pl.length-i)<=N?'nobetci':'dokuzcu'});
+}
+function turDegisti(el){
+ const d=durum[simdi];const once=d.tur[el.dataset.tur]||'nobetci';
+ oku();
+ if(simdi=='mim'&&(el.value=='takviye'||once=='takviye')){otoAta();kilit=true;araclariCiz();kilit=false}
+}
+function mevsimSec(k){oku();mevsim=k;gunButon();if(simdi=='mim'&&plakaListesi().some(p=>durum.mim.tur[p]=='takviye'))otoAta();ciz()}
+function gunSec(k){oku();gun=k;gunButon();ciz()}
+function sekme(k){
+ oku();simdi=k;
+ document.getElementById('bMim').className=k=='mim'?'aktif':'';
+ document.getElementById('bMur').className=k=='mur'?'aktif':'';
+ ciz();
+}
+function araclariCiz(){
+ const a=ayar(),d=durum[simdi];
+ oku();
+ let h='';
+ for(const p of plakaListesi()){
+  const secili=a.turler.includes(d.tur[p])?d.tur[p]:'nobetci';
+  h+='<div class="arac"><b style="width:34px;color:#9fb0c3">'+(plakaListesi().length-plakaListesi().indexOf(p))+'</b><span>'+p+'</span><select data-tur="'+p+'" onchange="turDegisti(this)">'+a.turler.map(k=>'<option value="'+k+'"'+(k==secili?' selected':'')+'>'+ADLAR[k]+'</option>').join('')+'</select>'+
+   '<label class="kucuk" style="margin:0">Arızalı</label><input type="checkbox" data-ariza="'+p+'"'+(d.ariza[p]?' checked':'')+'><label class="kucuk" style="margin:0">Ortak↓</label><input type="checkbox" data-ortak="'+p+'"'+(d.ortak&&d.ortak[p]?' checked':'')+'></div><div class="arac" style="margin-left:42px"><span class="kucuk" style="width:auto;font-size:15px">Yok</span><input type="time" data-yokb="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].b)||'')+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto;font-size:15px">–</span><input type="time" data-yoks="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].s)||'')+'" style="width:auto;height:auto;font-size:16px"></div>';
+ }
+ document.getElementById('araclar').innerHTML=h;
+}
+function hesapla(){
+ oku();
+ const a=ayar(),d=durum[simdi];
+ const sonuc=document.getElementById('sonuc');
+ const canli=plakaListesi().filter(p=>!d.ariza[p]).map(p=>({p:p,k:a.turler.includes(d.tur[p])?d.tur[p]:'nobetci'}));
+ if(canli.length==0){sonuc.innerHTML='<p>Plaka gir.</p>';return}
+ const sf=seferler(a);
+ const sonCikis={},say={};PLAN={};
+ let idx=0,satirlar='';
+ const YK={};for(const c of canli){const y=d.yok&&d.yok[c.p];if(y&&y.b&&y.s){const q=y.b.split(':'),r=y.s.split(':');YK[c.p]=[t(+q[0],+q[1]),t(+r[0],+r[1])]}}
+ const yokMu=(p,s)=>YK[p]&&s>=YK[p][0]&&s<YK[p][1];
+ const BK={};const bekle=c=>{BK[c.p]={c:c,n:0}};
+ const yokSec=s=>{let r=null;for(const p in BK){const b=BK[p];if(!r&&s>=YK[p][1]&&b.n<=7&&s<=a.sinir[b.c.k]){r=b.c;delete BK[p];continue}b.n++;if(b.n>7)delete BK[p]}return r};
+ sf.forEach(s=>{
+  let secilen=yokSec(s);if(!secilen)
+  for(let j=0;j<canli.length;j++){
+   const c=canli[(idx+j)%canli.length];
+   if(s<=a.sinir[c.k]){if(yokMu(c.p,s)){bekle(c);continue}secilen=c;idx=(idx+j+1)%canli.length;break}
+  }
+  if(!secilen){satirlar+='<tr class="bos"><td>'+fmt(s)+'</td><td>Araç yok</td><td></td><td></td></tr>';return}
+  const p=secilen.p;
+  say[p]=(say[p]||0)+1;
+  let uyari='';
+  if(sonCikis[p]!==undefined){
+   const donus=sonCikis[p]+a.tur(sonCikis[p]);
+   if(donus>s)uyari='Hızlanmalı, '+Math.ceil((donus-s)/60)+' dk geç';
+  }
+  sonCikis[p]=s;(PLAN[p]=PLAN[p]||[]).push(s);
+  satirlar+='<tr'+(uyari?' class="uyari"':'')+'><td>'+fmt(s)+'</td><td>'+p+'</td><td>'+say[p]+'</td><td>'+uyari+'</td></tr>';
+ });
+ let ozet='<h3>Her aracın son seferi</h3><table><tr><th>Araç</th><th>Tür</th><th>Son sefer</th><th>Toplam</th></tr>';
+ for(const c of canli){ozet+='<tr><td>'+c.p+'</td><td>'+ADLAR[c.k]+'</td><td>'+(sonCikis[c.p]!==undefined?fmt(sonCikis[c.p]):'-')+'</td><td>'+(say[c.p]||0)+'</td></tr>'}
+ ozet+='</table>';
+ sonuc.innerHTML=ozet+'<h3>Tüm seferler</h3><table><tr><th>Saat</th><th>Araç</th><th>Servis</th><th>Uyarı</th></tr>'+satirlar+'</table>';
+}
+function excel(){
+ const r=[];
+ const tb=document.querySelectorAll('#sonuc table');const son=tb[tb.length-1];const m={},sira=[];
+ if(son)[...son.rows].slice(1).forEach(tr=>{const s=tr.cells[0].innerText,p=tr.cells[1].innerText;if(p=='Araç yok')return;if(!m[p]){m[p]=[];sira.push(p)}m[p].push(s)});
+ let en=0;sira.forEach(p=>{en=Math.max(en,m[p].length)});
+ if(sira.length){const bas=['Plaka'];for(let i=1;i<=en;i++)bas.push(i+'. servis');r.push(bas.join(';'))}
+ sira.forEach(p=>r.push([p,...m[p]].join(';')));
+ if(!r.length){alert('Önce Hesapla tuşuna bas');return}
+ const b=new Blob(['\ufeff'+r.join('\r\n')],{type:'text/csv;charset=utf-8'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(b);
+ a.download='sefer_'+simdi+'_'+gun+'.csv';
+ document.body.appendChild(a);a.click();a.remove();
+}
+function pdf(){
+ const tb=document.querySelectorAll('#sonuc table');const son=tb[tb.length-1];
+ if(!son){alert('Önce Hesapla tuşuna bas');return}
+ const m={},sira=[];
+ [...son.rows].slice(1).forEach(tr=>{const s=tr.cells[0].innerText,p=tr.cells[1].innerText;if(p=='Araç yok')return;if(!m[p]){m[p]=[];sira.push(p)}m[p].push(s)});
+ let en=0;sira.forEach(p=>{en=Math.max(en,m[p].length)});
+ let h='<tr><th>Plaka</th>';for(let i=1;i<=en;i++)h+='<th>'+i+'. servis</th>';h+='</tr>';
+ sira.forEach((p,k)=>{h+='<tr'+(k%2?' class="z"':'')+'><td class="p">'+p+'</td>';for(let i=0;i<en;i++)h+='<td>'+(m[p][i]||'')+'</td>';h+='</tr>'});
+ const baslik=ayar().ad+' – '+GUNAD[gun]+' – '+new Date().toLocaleDateString('tr-TR');
+ const w=window.open('','_blank');
+ if(!w){alert('Açılır pencereye izin ver');return}
+ w.document.write('<html><head><meta charset="utf-8"><title>'+baslik+'</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif;margin:8px}h2{margin:4px 0 8px;font-size:18px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #444;padding:4px 3px;text-align:center}th{background:#1fa36a;color:#fff}td.p{font-weight:bold;font-size:14px;background:#e7f1fb}tr.z td{background:#f2f2f2}tr.z td.p{background:#e7f1fb}</style></head><body><h2>'+baslik+'</h2><table>'+h+'</table></body></html>');
+ w.document.close();w.focus();setTimeout(()=>w.print(),400);
+}
+function yeniFormat(x){
+ if(!/B\s*Ç\s*G\s*D/.test(x))return x;
+ const AD='(Fatih|Do[ğg]an\\s*G[ıi]da|Do[ğg]an\\s*G|Macro2|Macro|TaksiDura[ğg][ıi]2|TaksiDura[ğg][ıi]|TaksiDu\\S*|Moro[ğg]lu|Bal[ıi]k[çc][ıi]|Metrob[üu]s?|T[üu]yap2|Atirus2|Eczane2|Atrium)';
+ x=x.replace(/S[üu]re:\s*\d\d:\d\d:\d\d/g,' ');
+ x=x.replace(/İ?B\s*Ç\s*G\s*D\s+(\d+)\s+(?:\S+\s+)?(?:(\d\d:\d\d:\d\d)\s+)?(\d\d:\d\d:\d\d)/g,' #$1 BS: $3 ');
+ x=x.replace(new RegExp(AD+'\\s+(\\d\\d:\\d\\d:\\d\\d)\\s+(\\d\\d:\\d\\d:\\d\\d)(?:\\s+\\d\\d:\\d\\d:\\d\\d)?(?:\\s+-?\\d+\\s*dk)?(?:\\s*X)?(?:\\s*-\\s*\\d\\d:\\d\\d:\\d\\d)?','g'),' $1 $3 ');
+ return x;
+}
+async function pdfOku(f){return yeniFormat(await pdfOku0(f))}
+async function pdfOku0(f){
+ if(!window.pdfjsLib){
+  await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ }
+ const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+ let txt='';
+ for(let i=1;i<=doc.numPages;i++){const c=await (await doc.getPage(i)).getTextContent();txt+=c.items.map(x=>x.str).join(' ')+' '}
+ return txt;
+}
+const DURAK_RX='(Fatih|Do[ğg]an\\s*G|Macro2|Macro|TaksiDu|Moro[ğg]lu|Bal[ıi]k[çc][ıi]|Metrob[üu]|T[üu]yap2|Atirus2|Eczane2|Atrium)\\s*(\\d\\d):(\\d\\d):(\\d\\d)';
+const OFS={g:{doang:[4,4],macro:[7,7],taksidu:[12,12],morolu:[16,16],balk:[18,18],metrob:[30,32]},
+ d:{tyap2:[35,36],atirus2:[43,44],eczane2:[49,52],taksidu:[55,60],macro2:[60,65],atrium:[65,71]}};
+const ara=(s,a,b)=>s>=a&&s<b;
+function gec(varis,plan){const d=varis-plan;return d<60?0:Math.floor(d/30)/2}
+function cumaEk(o,yon,n,c){if(!c)return o;const e=yon=='g'?{taksidu:1,balk:1,morolu:1}:{macro2:1,atrium:1};return e[n]?[o[0]+1,o[1]+1]:o}
+async function carpiHesap(f){
+ let el=document.getElementById('carpi');if(!f)return;
+ el.innerHTML='<p>PDF okunuyor...</p>';
+ let txt;
+ try{txt=await pdfOku(f)}catch(e){el.innerHTML='<p>PDF okunamadı. İnternet bağlantısı gerekli.</p>';return}
+ {const dm=txt.match(/[İI]hlal:\s*\d+\s*\/\s*\d+\s*(\d\d)\.(\d\d)\.(\d{4})/);if(dm){const pt=dm[3]+'-'+dm[2]+'-'+dm[1];if(pt!==tarih){if(dbOku()[pt]){tarihSec(pt);el=document.getElementById('carpi')}else{alert(pt+' tarihli kayıtlı liste yok. Önce o günü seçip plakaları gir.');el.innerHTML='';return}}}}
+ const {IS,SIRA}=ilkSeferler();
+ const dt=txt.match(/[İI]hlal:\s*\d+\s*\/\s*\d+\s*(\d\d)\.(\d\d)\.(\d{4})/)||txt.match(/(\d\d)\.(\d\d)\.(\d{4})/);const CUMA=dt?new Date(+dt[3],+dt[2]-1,+dt[1]).getDay()==5:false;
+ const d0=durum.mim;const ORT={};for(const p in (d0.ortak||{}))if(d0.ortak[p]&&!d0.ariza[p])ORT[p.replace(/\D/g,'')]=1;
+ const EV={},AD={},TK={};
+ const SLOT={};{const A=[];for(const p of txt.split(/Hat\s*No\s*:\s*/).slice(1)){const pm=p.match(/^\s*(\S+?)\s*Gidi/);if(!pm)continue;const k=pm[1].replace(/\D/g,'');for(const s of p.split(/#\s*\d+/).slice(1)){const q=s.replace(/BS:\s*\d\d:\d\d:\d\d/,'').replace(/[ÇİI]:/g,'').match(/^\s*Fatih\s+(\d\d):(\d\d):(\d\d)/);if(!q)continue;{const sx=s.replace(/BS:\s*\d\d:\d\d:\d\d/,'').replace(/TS:\s*\d\d:\d\d:\d\d/,'');const nz=(sx.match(/\d\d:\d\d:\d\d/g)||[]).filter(z=>z!='00:00:00').length;if(nz<6)continue}const tm=(+q[1])*3600+(+q[2])*60+(+q[3]);if(tm)A.push([tm,k])}}A.sort((x,y)=>x[0]-y[0]);const SF=seferler(Object.assign({},MIM,GUN[gun].mim));A.forEach((x,i)=>{if(i<SF.length)SLOT[x[1]+'@'+x[0]]=SF[i]})}
+ for(const p of txt.split(/Hat\s*No\s*:\s*/).slice(1)){
+  const pm=p.match(/^\s*(\S+?)\s*Gidi/);if(!pm)continue;
+  const plk=pm[1].replace(/\D/g,'');AD[plk]=pm[1];const ev=EV[plk]=[];TK[plk]=[0,0];
+  let base=null,ilkYok=true;
+  for(const s of p.split(/#\s*\d+/).slice(1)){TK[plk][0]++;
+   const d=[];let m;const rx=new RegExp(DURAK_RX,'g');
+   const ts=s.replace(/TS:\s*\d\d:\d\d:\d\d/,'').replace(/BS:\s*\d\d:\d\d:\d\d/,'');let adl=ts.match(/Fatih|Do[ğg]an\s*G|Macro2|Macro|TaksiDu|Moro[ğg]lu|Bal[ıi]k[çc][ıi]|Metrob[üu]|T[üu]yap2|Atirus2|Eczane2|Atrium/g)||[];const sa=ts.match(/\d\d:\d\d:\d\d/g)||[];
+   const kk=adl[0]&&/^Fat/.test(adl[0])?8:7;adl=adl.slice(0,kk);
+   if(adl.length===kk&&sa.length>=kk)adl.forEach((n,k)=>{const q=sa[k].split(':');const tm=(+q[0])*3600+(+q[1])*60+(+q[2]);if(tm)d.push([n.toLowerCase().replace(/[^a-z0-9]/g,''),tm])});
+   else while((m=rx.exec(s))){const tm=(+m[2])*3600+(+m[3])*60+(+m[4]);if(tm)d.push([m[1].toLowerCase().replace(/[^a-z0-9]/g,''),tm])}
+   const bs=s.match(/BS:\s*(\d\d):(\d\d):(\d\d)/);
+   if(!d.length||!bs)continue;
+   const b=(+bs[1])*3600+(+bs[2])*60+(+bs[3]);
+   const yon=d[0][0]=='fatih'?'g':(d[0][0]=='tyap2'?'d':null);
+   if(!yon)continue;
+   let ilkTek=false;
+   if(yon=='g'){if(ilkYok&&IS[plk]!==undefined){base=IS[plk];ilkTek=true;ilkYok=false}else{const fd=d[0][1];const sl=SLOT[plk+'@'+fd];ilkYok=false;if(sl!==undefined)base=sl;else{base=null;continue}}}
+   if(base===null)continue;TK[plk][1]++;
+   const uz=(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0)))?1:0;
+   const mor=ara(base,t(8,0),t(9,0))||ara(base,t(15,30),t(16,30));
+   let enb=0;
+   for(const [n,tm] of d){const o0=OFS[yon][n];if(!o0)continue;const o=cumaEk(o0,yon,n,CUMA&&base>=t(12,0));if(n=='morolu'&&!mor)continue;if(n=='balk'&&mor)continue;if(tm<base||tm-base>3*3600)continue;enb=Math.max(enb,gec(tm,base+o[uz]*60))}
+   const sk=base+(yon=='d'?1:0),gs=yon=='g'?base:b;
+   if(yon=='d')base=null;
+   if(enb>60||enb<=0)continue;
+   ev.push({tm:sk,g:gs,enb:enb,ilk:ilkTek,yon:yon,p:plk});
+  }
+ }
+ const birim=[];let i=0;
+ while(i<SIRA.length){const a=SIRA[i];if(ORT[a]&&i+1<SIRA.length){birim.push([a,SIRA[i+1]]);i+=2}else{birim.push([a]);i++}}
+ for(const k in EV)if(!SIRA.includes(k))birim.push([k]);
+ let h='<table><tr><th>Araç</th><th>Tolerans</th><th>Çarpı</th><th>Tutar</th><th>Geç kalınan tekler</th></tr>';
+ let top=0,topTL=0;const kimKime=[];
+ for(const u of birim){
+  if(!u.some(x=>EV[x]))continue;
+  const evs=[].concat(...u.map(x=>EV[x]||[])).sort((x,y)=>x.tm-y.tm);
+  let kul=0,carpi=0,ilkC=0;const det=[];
+  for(const e of evs){
+   const on=u.length>1?(AD[e.p]||e.p)+' – ':'';
+   if(e.ilk){ilkC++;kul=Math.min(10,kul+e.enb);det.push(on+'İlk servis '+fmt(e.g)+': '+e.enb+' dk – ÇARPI 700 TL');continue}
+   let c=false;if(kul+e.enb<=10)kul+=e.enb;else{kul=10;carpi++;c=true}
+   det.push(on+(e.yon=='g'?'Gidiş ':'Dönüş ')+fmt(e.g)+': '+e.enb+' dk'+(c?' – ÇARPI':''));
+  }
+  const tl=carpi*500+ilkC*700;top+=carpi+ilkC;topTL+=tl;
+  const ai=SIRA.indexOf(u[u.length-1]);
+  const arka=ai>=0&&SIRA.length>u.length?SIRA[(ai+1)%SIRA.length]:'';
+  const ad=u.map(x=>AD[x]||x).join(' + ');const ar=AD[arka]||arka;
+  if(tl&&arka)kimKime.push(ad+' → '+ar+': '+(carpi+ilkC)+' çarpı, '+tl+' TL');
+  h+='<tr'+(tl?' class="uyari"':'')+'><td>'+ad+(u.length>1?' (ortak)':'')+'<br><span class="kucuk">okunan tek: '+u.map(x=>TK[x]?TK[x][1]+'/'+TK[x][0]:'-').join(', ')+'</span></td><td>'+kul+' / 10 dk</td><td>'+(carpi+ilkC)+(ilkC?' ('+ilkC+' ilk servis)':'')+'</td><td>'+tl+' TL'+(arka&&tl?' → '+ar:'')+'</td><td class="kucuk">'+det.join('<br>')+'</td></tr>';
+ }
+ el.innerHTML=h+'</table><p>Toplam: '+top+' çarpı, '+topTL+' TL. Sıkışma cezası henüz hesaba katılmıyor.</p><details><summary>PDF metni (kontrol)</summary><pre style="white-space:pre-wrap;font-size:11px">'+txt.slice(0,1500).replace(/</g,'&lt;')+'</pre></details>'+(kimKime.length?'<h3>Kim kime veriyor</h3><p>'+kimKime.join('<br>')+'</p>':'')+'<button class="ana" style="background:#c0392b" onclick="carpiPdf()">Çarpıları PDF olarak al</button>';
+}
+async function carpiHesapEski(f){
+ const el=document.getElementById('carpi');if(!f)return;
+ el.innerHTML='<p>PDF okunuyor...</p>';
+ let txt;
+ try{txt=await pdfOku(f)}catch(e){el.innerHTML='<p>PDF okunamadı. İnternet bağlantısı gerekli.</p>';return}
+ const parcalar=txt.split(/Hat\s*No\s*:\s*/).slice(1);
+ let h='<table><tr><th>Araç</th><th>Tolerans</th><th>Çarpı</th><th>Tutar</th><th>Geç kalınan tekler</th></tr>';
+ let toplam=0,ilkT=0;const kimKime=[];const {IS,SIRA}=ilkSeferler();
+ for(const p of parcalar){
+  const pm=p.match(/^\s*(\S+?)\s*Gidi/);if(!pm)continue;
+  let base=null,kul=0,carpi=0,ilkC=0,ilkYok=true;const det=[];const plk=pm[1].replace(/\D/g,'');
+  for(const s of p.split(/#\d+\s/).slice(1)){
+   const d=[];let m;const rx=new RegExp(DURAK_RX,'g');
+   while((m=rx.exec(s))){const tm=(+m[2])*3600+(+m[3])*60+(+m[4]);if(tm)d.push([m[1].toLowerCase().replace(/[^a-z0-9]/g,''),tm])}
+   const bs=s.match(/BS:\s*(\d\d):(\d\d):(\d\d)/);
+   if(!d.length||!bs)continue;
+   const b=(+bs[1])*3600+(+bs[2])*60+(+bs[3]);
+   const yon=d[0][0]=='fatih'?'g':(d[0][0]=='tyap2'?'d':null);
+   if(!yon)continue;
+   let ilkTek=false;
+   if(yon=='g'){if(ilkYok&&IS[plk]!==undefined){base=IS[plk];ilkTek=true;ilkYok=false}else{if(!b||b>=t(23,59)){base=null;continue}base=b;ilkYok=false}}
+   if(base===null)continue;
+   const uz=(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0)))?1:0;
+   const mor=ara(base,t(8,0),t(9,0))||ara(base,t(15,30),t(16,30));
+   let enb=0;
+   for(const [n,tm] of d){
+    const o=OFS[yon][n];if(!o)continue;
+    if(n=='morolu'&&!mor)continue;
+    if(n=='balk'&&mor)continue;
+    if(tm<base||tm-base>3*3600)continue;
+    enb=Math.max(enb,gec(tm,base+o[uz]*60));
+   }
+   if(yon=='d')base=null;
+   if(enb>60)continue;
+   if(ilkTek){if(enb>0){ilkC=1;kul=Math.min(10,kul+enb);det.push('İlk servis '+fmt(base)+': '+enb+' dk – ÇARPI 700 TL')}continue}
+   if(enb>0){
+    let c=false;
+    if(kul+enb<=10)kul+=enb;else{kul=10;carpi++;c=true}
+    det.push((yon=='g'?'Gidiş ':'Dönüş ')+fmt(b)+': '+enb+' dk'+(c?' – ÇARPI':''));
+   }
+  }
+  toplam+=carpi;ilkT+=ilkC;const tl=carpi*500+ilkC*700;const ai=SIRA.indexOf(plk);const arka=ai>=0&&SIRA.length>1?SIRA[(ai+1)%SIRA.length]:'';if(tl&&arka)kimKime.push(pm[1]+' → '+arka+': '+(carpi+ilkC)+' çarpı, '+tl+' TL');
+  h+='<tr'+(tl?' class="uyari"':'')+'><td>'+pm[1]+'</td><td>'+kul+' / 10 dk</td><td>'+(carpi+ilkC)+(ilkC?' (1 ilk servis)':'')+'</td><td>'+tl+' TL'+(arka&&tl?' → '+arka:'')+'</td><td class="kucuk">'+det.join('<br>')+'</td></tr>';
+ }
+ el.innerHTML=h+'</table><p>Toplam: '+(toplam+ilkT)+' çarpı, '+(toplam*500+ilkT*700)+' TL. Sıkışma cezası henüz hesaba katılmıyor.</p>'+(kimKime.length?'<h3>Kim kime veriyor</h3><p>'+kimKime.join('<br>')+'</p>':'')+'<button class="ana" style="background:#c0392b" onclick="carpiPdf()">Çarpıları PDF olarak al</button>';
+}
+function ilkSeferler(){
+ if(simdi=='mim')oku();
+ const a=Object.assign({},MIM,GUN[gun].mim),d=durum.mim;
+ const canli=d.plakalar.split(/[\s,;]+/).filter(x=>x&&!d.ariza[x]).map(p=>({p:p,k:a.turler.includes(d.tur[p])?d.tur[p]:'nobetci'}));
+ const IS={},SIRA=canli.map(c=>c.p.replace(/\D/g,''));
+ if(!canli.length)return {IS,SIRA};
+ let idx=0;
+ for(const s of seferler(a)){for(let j=0;j<canli.length;j++){const c=canli[(idx+j)%canli.length];if(s<=a.sinir[c.k]){const k=c.p.replace(/\D/g,'');if(IS[k]===undefined)IS[k]=s;(IS['_'+k]=IS['_'+k]||[]).push(s);idx=(idx+j+1)%canli.length;break}}}
+ return {IS,SIRA};
+}
+function carpiPdf(){
+ const tb=document.querySelector('#carpi table');
+ if(!tb){alert('Önce PDF yükle');return}
+ const ozet=document.querySelector('#carpi p');
+ const baslik='Çarpı Raporu – '+new Date().toLocaleDateString('tr-TR');
+ const w=window.open('','_blank');
+ if(!w){alert('Açılır pencereye izin ver');return}
+ w.document.write('<html><head><meta charset="utf-8"><title>'+baslik+'</title><style>@page{size:A4 portrait;margin:10mm}body{font-family:Arial,sans-serif}h2{font-size:18px;margin:4px 0 10px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #444;padding:5px;text-align:left;vertical-align:top}th{background:#1fa36a;color:#fff}tr.uyari td{background:#fbebeb}td:first-child{font-weight:bold;font-size:14px}p{font-weight:bold;margin-top:10px}</style></head><body><h2>'+baslik+'</h2>'+tb.outerHTML+[...document.querySelectorAll('#carpi h3,#carpi p')].map(x=>x.outerHTML).join('')+'</body></html>');
+ w.document.close();w.focus();setTimeout(()=>w.print(),400);
+}
+let PLAN={},takipT=null,uyarildi={},ctx=null;
+function bip(f,d){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+d)}catch(e){}}
+function duraklar(dep){const c=new Date().getDay()==5&&dep>=t(12,0);const r=duraklar0(dep);return c?r.map(x=>[x[0],x[1]+({'Denizgören':1,'Moroğlu':1,'Balıkçı':1,'Makro':1,'Atrium':1}[x[0]]||0)]):r}
+function duraklar0(dep){
+ const uz=(ara(dep,t(7,24),t(8,30))||ara(dep,t(15,0),t(19,0)))?1:0;
+ const mor=ara(dep,t(8,0),t(9,0))||ara(dep,t(15,30),t(16,30));
+ return [['Doğan Gıda',4,4],['Makro Çarşı',7,7],['Denizgören',12,12],mor?['Moroğlu',16,16]:['Balıkçı',18,18],['Metrobüs',30,32],['TÜYAP',35,36],['Çekmece',43,44],['Mimar Sinan',49,52],['Meydan',55,60],['Makro',60,65],['Atrium',65,71]].map(x=>[x[0],x[uz?2:1]]);
+}
+function aktifGoster(p,s,el){
+ if(simdi!='mim')return false;
+ let dep=null;
+ for(const x of (PLAN[p]||[])){const D=duraklar(x);const ek=(GPS!==null&&KONUM['Atrium']&&!VARDI[x])?30*60:0;if(s>=x-15&&s<x+D[D.length-1][1]*60+ek&&!VARDI[x]){dep=x;break}}
+ if(dep===null)return false;
+ const D=duraklar(dep),e=s-dep;
+ let ad='Fatih Market – kalkış',hedef=dep;
+ if(e>=0){const h=D.find(x=>x[1]*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
+ const a=Math.abs(e),sw=(e<0?'-':'')+String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');
+ const k=hedef-s;
+ el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>';
+ if(e===0)bip(1500,0.8);
+ return true;
+}
+function takip(){
+ const p=document.getElementById('benim').value.trim();
+ if(!PLAN[p]){alert('Önce Hesapla tuşuna bas, plakanı listedeki gibi yaz');return}
+ try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume()}catch(e){}
+ if(window.Notification&&Notification.permission=='default')Notification.requestPermission();
+ if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});
+ clearInterval(takipT);uyarildi={};gpsBaslat(p);
+ takipT=setInterval(()=>{
+  const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();
+  if(aktifGoster(p,s,document.getElementById('sayac')))return;
+  const sonraki=PLAN[p].find(x=>x>=s);
+  const el=document.getElementById('sayac');
+  if(sonraki===undefined){el.innerHTML='<p>Bugün başka seferin yok.</p>';clearInterval(takipT);return}
+  const kalan=sonraki-s;
+  if(kalan<=300&&!uyarildi[sonraki]){uyarildi[sonraki]=1;bip(880,0.6);setTimeout(()=>bip(880,0.6),800);if(navigator.vibrate)navigator.vibrate([500,200,500]);if(window.Notification&&Notification.permission=='granted')new Notification('5 dakika kaldı',{body:p+' – '+fmt(sonraki)+' seferi'})}
+  if(kalan<=15){el.innerHTML='<div style="font-size:96px;text-align:center;color:#ff5a5a;font-weight:bold">'+kalan+'</div><p style="text-align:center">'+fmt(sonraki)+' seferi</p>';if(kalan>0)bip(kalan<=3?1200:700,0.12);else{bip(1500,1);if(navigator.vibrate)navigator.vibrate(1000)}}
+  else el.innerHTML='<p style="font-size:22px">Sıradaki sefer: <b>'+fmt(sonraki)+'</b><br>Kalan: '+Math.floor(kalan/60)+' dk '+(kalan%60)+' sn</p>';
+ },1000);
+}
+function gunStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+let tarih=gunStr(new Date());
+function dbOku(){try{return JSON.parse(localStorage.getItem('sefer_db')||'{}')}catch(e){return {}}}
+function kaydet(){try{oku();const db=dbOku();db[tarih]={mim:durum.mim,mur:durum.mur,mevsim:mevsim};const s='0000';for(const k in db)if(k<s)delete db[k];localStorage.setItem('sefer_db',JSON.stringify(db))}catch(e){}}
+function tarihSec(v,ilk){if(!v)return;if(!ilk)kaydet();tarih=v;const k=dbOku()[v];for(const b of ['mim','mur'])durum[b]=k&&k[b]?k[b]:{plakalar:'',tur:{},ariza:{},ortak:{}};if(k&&k.mevsim)mevsim=k.mevsim;const g=new Date(v+'T12:00').getDay();gun=g==6?'cmt':(g==0?'paz':'hi');gunButon();document.getElementById('tarih').value=v;ciz()}
+function veriKopyala(){
+ kaydet();const s=JSON.stringify(dbOku());
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(()=>alert('Kopyalandı. WhatsApp ile kendine gönder, telefonda Verileri yapıştır de.')).catch(()=>prompt('Bu yazının hepsini kopyala:',s))}
+ else prompt('Bu yazının hepsini kopyala:',s);
+}
+function veriYapistir(){
+ const s=prompt('Kopyaladığın veriyi buraya yapıştır:');if(!s)return;
+ let y;try{y=JSON.parse(s)}catch(e){alert('Veri okunamadı, tamamını kopyaladığından emin ol.');return}
+ const db=dbOku();for(const k in y)db[k]=y[k];
+ localStorage.setItem('sefer_db',JSON.stringify(db));
+ for(const k in y)bulutaGonder(k);tarihSec(tarih,true);alert(Object.keys(y).length+' günlük kayıt eklendi.');
+}
+function ciz(){
+ const a=ayar(),d=durum[simdi];
+ document.getElementById('alan').innerHTML=
+  '<h2>'+a.ad+' – '+GUNAD[gun]+'</h2>'+
+  '<label>Plakalar, kahyanın sırasıyla (boşluk veya virgülle)</label>'+
+  '<textarea id="liste" rows="3" oninput="araclariCiz()">'+d.plakalar+'</textarea>'+
+  '<h3>Araç türleri</h3><div id="araclar"></div>'+
+  '<button class="ana" onclick="hesapla()">Hesapla</button>'+
+  '<button class="ana" style="background:#2f6fd6" onclick="excel()">Excel olarak indir</button>'+
+  '<button class="ana" style="background:#c0392b" onclick="pdf()">PDF / Yazdır</button>'+
+  '<h3>Benim aracım – alarm</h3><input id="benim" placeholder="Plakan, örnek 03" style="width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px"><button class="ana" style="background:#8e44ad" onclick="takip()">Takibi başlat</button><div id="sayac"></div>'+
+  '<h3>Çarpı hesabı (GPS PDF)</h3><input type="file" accept="application/pdf" onchange="carpiHesap(this.files[0])"><div id="carpi"></div>'+
+  '<h3>Durak haritası</h3><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p>'+
+  '<div id="sonuc"></div>';
+ araclariCiz();setTimeout(haritaKur,50);
+ if(d.plakalar)hesapla();
+}
+const DURAK_ADLARI=['Fatih Market','Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu','Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium'];
+let KONUM={},HARITA=null,IMLER=[],GPS=null,BENKONUM=null;const VARDI={};
+const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
+let FB=null,hazir=false;const GONDER={},BT={};
+function bulutDurum(m){const e=document.getElementById('bulut');if(e)e.textContent=m}
+function bulutaGonder(k){
+ if(!FB||!hazir)return;const g=dbOku()[k];if(!g)return;
+ if(!(g.mim&&g.mim.plakalar)&&!(g.mur&&g.mur.plakalar))return;
+ const v=JSON.stringify(g);if(GONDER[k]===v)return;GONDER[k]=v;
+ FB.collection('gunler').doc(k).set({v:v,z:Date.now()}).then(()=>bulutDurum('☁ Kaydedildi, bütün cihazlar görüyor')).catch(e=>{delete GONDER[k];bulutDurum('☁ Kaydedilemedi: '+e.code)});
+}
+const kaydet0=kaydet;
+kaydet=function(){kaydet0();const k=tarih;clearTimeout(BT[k]);BT[k]=setTimeout(()=>bulutaGonder(k),1500)};
+try{
+ firebase.initializeApp(FBC);FB=firebase.firestore();bulutDurum('☁ Bağlanıyor...');
+ FB.collection('gunler').onSnapshot(sn=>{
+  const db=dbOku();let yenile=false;
+  sn.docChanges().forEach(c=>{if(c.type=='removed')return;const x=c.doc.data(),id=c.doc.id;if(!x||!x.v||GONDER[id]===x.v)return;try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}});
+  localStorage.setItem('sefer_db',JSON.stringify(db));
+  if(!hazir){hazir=true;const bul=new Set(sn.docs.map(d=>d.id));for(const k in db)if(!bul.has(k))bulutaGonder(k)}
+  const ae=document.activeElement;
+  if(yenile&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))tarihSec(tarih,true);
+  bulutDurum('☁ Bağlı – '+sn.size+' gün kayıtlı');
+ },e=>bulutDurum('☁ Bağlanamadı: '+e.code));
+}catch(e){bulutDurum('☁ Bulut yüklenemedi, internet var mı?')}
+function mesafe(a,b){const R=6371e3,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function imleriCiz(){if(!HARITA)return;IMLER.forEach(m=>m.remove());IMLER=[];for(const n in KONUM)IMLER.push(L.marker(KONUM[n]).addTo(HARITA).bindTooltip(n,{permanent:true,direction:'top'}));const b=document.getElementById('durakBilgi');if(b)b.textContent=Object.keys(KONUM).length+' / '+DURAK_ADLARI.length+' durak işaretli'}
+function haritaKur(){if(HARITA){HARITA.remove();HARITA=null}const el=document.getElementById('harita');if(!el)return;if(!window.L){el.textContent='Harita yüklenemedi, internet var mı?';return}HARITA=L.map(el).setView([41.02,28.59],13);const kat={'Harita':L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap'}),'Harita 2':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}),'Uydu':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})};kat['Harita'].addTo(HARITA);L.control.layers(kat).addTo(HARITA);HARITA.on('click',ev=>{const n=document.getElementById('durakSec').value;if(!confirm(n+' buraya kaydedilsin mi?'))return;KONUM[n]=[ev.latlng.lat,ev.latlng.lng];durakKaydet();imleriCiz()});imleriCiz()}
+function durakSil(){const n=document.getElementById('durakSec').value;if(!KONUM[n])return;if(!confirm(n+' işareti silinsin mi?'))return;delete KONUM[n];durakKaydet();imleriCiz()}
+function durakKaydet(){if(FB)FB.collection('ayar').doc('duraklar').set({v:JSON.stringify(KONUM),z:Date.now()}).catch(e=>alert('Durak kaydedilemedi: '+e.code))}
+if(FB)FB.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v);imleriCiz()}catch(e){}}},e=>{});
+function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
+tarihSec(tarih,true);
+document.addEventListener('change',()=>kaydet());
+document.addEventListener('input',()=>kaydet());
+window.addEventListener('beforeunload',kaydet);
+</script>
+</body>
+</html>
