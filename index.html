@@ -101,6 +101,7 @@ function oku(){
  if(!d.ortak)d.ortak={};document.querySelectorAll('[data-ortak]').forEach(x=>{d.ortak[x.dataset.ortak]=x.checked});
  {const c=document.getElementById('uzYok');if(c)durum.mim.uzatYok=c.checked}
  if(document.querySelector('[data-uzi]')){d.uzat=[];document.querySelectorAll('[data-uzi]').forEach(r=>{const g=x=>r.querySelector('[data-u="'+x+'"]').value;const e=[...r.querySelectorAll('[data-ue]')].map(x=>+x.value||0);if(g('b')&&g('s')&&e.some(x=>x))d.uzat.push({b:g('b'),s:g('s'),e:e})})}
+ if(document.getElementById('araclar')){d.yokEk={};document.querySelectorAll('[data-yer]').forEach(r=>{const p=r.dataset.yer;(d.yokEk[p]=d.yokEk[p]||[]).push({b:r.querySelector('[data-yeb]').value,s:r.querySelector('[data-yes]').value})})}
  if(!d.yok)d.yok={};document.querySelectorAll('[data-yokb]').forEach(x=>{const p=x.dataset.yokb;d.yok[p]=d.yok[p]||{};d.yok[p].b=x.value});document.querySelectorAll('[data-yoks]').forEach(x=>{const p=x.dataset.yoks;d.yok[p]=d.yok[p]||{};d.yok[p].s=x.value});
 }
 function plakaListesi(){return durum[simdi].plakalar.split(/[\s,;]+/).filter(x=>x)}
@@ -130,7 +131,7 @@ function araclariCiz(){
  for(const p of plakaListesi()){
   const secili=a.turler.includes(d.tur[p])?d.tur[p]:'nobetci';
   h+='<div class="arac"><b style="width:34px;color:#9fb0c3">'+(plakaListesi().length-plakaListesi().indexOf(p))+'</b><span>'+p+'</span><select data-tur="'+p+'" onchange="turDegisti(this)">'+a.turler.map(k=>'<option value="'+k+'"'+(k==secili?' selected':'')+'>'+ADLAR[k]+'</option>').join('')+'</select>'+
-   '<label class="kucuk" style="margin:0">Arızalı</label><input type="checkbox" data-ariza="'+p+'"'+(d.ariza[p]?' checked':'')+'><label class="kucuk" style="margin:0">Ortak↓</label><input type="checkbox" data-ortak="'+p+'"'+(d.ortak&&d.ortak[p]?' checked':'')+'></div><div class="arac" style="margin-left:42px"><span class="kucuk" style="width:auto;font-size:15px">Yok</span><input type="time" data-yokb="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].b)||'')+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto;font-size:15px">–</span><input type="time" data-yoks="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].s)||'')+'" style="width:auto;height:auto;font-size:16px"></div>';
+   '<label class="kucuk" style="margin:0">Arızalı</label><input type="checkbox" data-ariza="'+p+'"'+(d.ariza[p]?' checked':'')+'><label class="kucuk" style="margin:0">Ortak↓</label><input type="checkbox" data-ortak="'+p+'"'+(d.ortak&&d.ortak[p]?' checked':'')+'></div><div class="arac" style="margin-left:42px"><span class="kucuk" style="width:auto;font-size:15px">Yok</span><input type="time" data-yokb="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].b)||'')+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto;font-size:15px">–</span><input type="time" data-yoks="'+p+'" value="'+((d.yok&&d.yok[p]&&d.yok[p].s)||'')+'" style="width:auto;height:auto;font-size:16px"><button onclick="yokEkle(\''+p+'\')" style="width:auto;padding:6px 14px;font-size:20px;border-radius:8px;border:0;background:#2f6fd6;color:#fff">+</button></div>'+yokEkHtml(d,p)+'';
  }
  document.getElementById('araclar').innerHTML=h;
 }
@@ -143,10 +144,10 @@ function hesapla(){
  const sf=seferler(a);
  const sonCikis={},say={};PLAN={};
  let idx=0,satirlar='';
- const YK={};for(const c of canli){const y=d.yok&&d.yok[c.p];if(y&&y.b&&y.s){const q=y.b.split(':'),r=y.s.split(':');YK[c.p]=[t(+q[0],+q[1]),t(+r[0],+r[1])]}}
- const yokMu=(p,s)=>YK[p]&&s>=YK[p][0]&&s<YK[p][1];
+ const YK={};const ykE=(p,y)=>{if(y&&y.b&&y.s){const q=y.b.split(':'),r=y.s.split(':');(YK[p]=YK[p]||[]).push([t(+q[0],+q[1]),t(+r[0],+r[1])])}};for(const c of canli){ykE(c.p,d.yok&&d.yok[c.p]);((d.yokEk&&d.yokEk[c.p])||[]).forEach(y=>ykE(c.p,y))}
+ const yokMu=(p,s)=>!!YK[p]&&YK[p].some(x=>s>=x[0]&&s<x[1]);
  const BK={};const bekle=c=>{BK[c.p]={c:c,n:0}};
- const yokSec=s=>{let r=null;for(const p in BK){const b=BK[p];if(!r&&s>=YK[p][1]&&b.n<=7&&s<=a.sinir[b.c.k]){r=b.c;delete BK[p];continue}b.n++;if(b.n>7)delete BK[p]}return r};
+ const yokSec=s=>{let r=null;for(const p in BK){const b=BK[p];if(!r&&!yokMu(p,s)&&b.n<=5&&s<=a.sinir[b.c.k]){r=b.c;delete BK[p];continue}b.n++;if(b.n>5)delete BK[p]}return r};
  sf.forEach(s=>{
   let secilen=yokSec(s);if(!secilen)
   for(let j=0;j<canli.length;j++){
@@ -368,7 +369,7 @@ function aktifGoster(p,s,el){
  if(e>=0){const h=D.find(x=>x[1]*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
  const a=Math.abs(e),sw=(e<0?'-':'')+String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');
  const k=hedef-s;
- el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>';
+ el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?trafikSatir(ad,k):'');
  if(e===0)bip(1500,0.8);
  return true;
 }
@@ -419,9 +420,9 @@ function ciz(){
   '<button class="ana" style="background:#2f6fd6" onclick="excel()">Excel olarak indir</button>'+
   '<button class="ana" style="background:#c0392b" onclick="pdf()">PDF / Yazdır</button></details>'+
   uzatHtml2(d)+
-  '<details class="bolum" data-k="takip"'+ac('takip')+'><summary>Benim aracım – takip</summary><input id="benim" placeholder="Plakan, örnek 03" style="width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px"><button class="ana" style="background:#8e44ad" onclick="takip()">Takibi başlat</button><div id="sayac"></div></details>'+
+  '<details class="bolum" data-k="takip"'+ac('takip')+'><summary>Benim aracım – takip</summary><input id="benim" placeholder="Plakan, örnek 03" style="width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px"><button class="ana" style="background:#8e44ad" onclick="takip()">Takibi başlat</button><div class="sekmeler"><button style="background:#c0392b;color:#fff" onclick="siraDurum(false)">Sıradan çıktım</button><button style="background:#1fa36a;color:#fff" onclick="siraDurum(true)">Sıraya girdim</button></div><div id="sayac"></div></details>'+
   '<details class="bolum" data-k="carpi"'+ac('carpi')+'><summary>Çarpı hesabı (GPS PDF)</summary><input type="file" accept="application/pdf" onchange="carpiHesap(this.files[0])"><div id="carpi"></div></details>'+
-  '<details class="bolum" data-k="harita"'+ac('harita')+'><summary>Durak haritası</summary><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p></details>'+
+  '<details class="bolum" data-k="harita"'+ac('harita')+'><summary>Durak haritası</summary><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p><label>TomTom trafik anahtarı</label><input id="ttKey" value="'+(TT_KEY||'')+'" placeholder="Anahtarı buraya yapıştır" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:8px"><button class="ana" style="background:#2f6fd6;padding:10px;font-size:16px" onclick="ttKaydet()">Anahtarı kaydet</button></details>'+
   '<details class="bolum" data-k="sonuc"'+ac('sonuc')+'><summary>Seferler</summary><div id="sonuc"></div></details>';
  araclariCiz();setTimeout(haritaKur,50);
  if(d.plakalar)hesapla();
@@ -437,6 +438,21 @@ function uzatHtml2(d){const L=(d.uzat||[]).filter(u=>u.e);while(L.length<2)L.pus
  let h='<details class="bolum" data-k="uzat"'+ac('uzat')+'><summary>Günün uzatması</summary><label style="display:flex;gap:10px;align-items:center;font-size:18px;color:#ffcf5a;margin:6px 0 10px"><input type="checkbox" id="uzYok" style="width:28px;height:28px" onchange="oku();kaydet();hesapla()"'+(durum.mim.uzatYok?' checked':'')+'>Standart uzatmaları sayma (okul tatili, normal saatler)</label><p class="kucuk">Sadece bu gün için. Fatih\'ten kalkış saat aralığını yaz, her durağın planına kaç dakika eklendiğini gir. Boş durak değişmez. Atrium\'a yazdığın dakika tur süresine de eklenir.</p>';
  L.forEach(u=>{h+='<div data-uzi style="border-bottom:1px solid #2c3a4b;padding:8px 0"><div class="arac"><input type="time" data-u="b" value="'+u.b+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto">–</span><input type="time" data-u="s" value="'+u.s+'" style="width:auto;height:auto;font-size:16px"></div>'+UZ_DURAK.map((n,k)=>'<div class="arac"><span class="kucuk" style="width:150px;font-size:16px">'+n+'</span><input type="number" data-ue="'+k+'" value="'+(u.e[k]||'')+'" min="0" step="0.5" placeholder="0" style="width:80px;height:auto;font-size:18px"><span class="kucuk" style="width:auto">dk</span></div>').join('')+'</div>'});
  return h+'<button class="ana" onclick="oku();kaydet();hesapla()">Uygula ve hesapla</button></details>'}
+function yokEkHtml(d,p){return ((d.yokEk&&d.yokEk[p])||[]).map((y,i)=>'<div class="arac" data-yer="'+p+'" style="margin-left:42px"><span class="kucuk" style="width:auto;font-size:15px">Yok</span><input type="time" data-yeb value="'+(y.b||'')+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto;font-size:15px">–</span><input type="time" data-yes value="'+(y.s||'')+'" style="width:auto;height:auto;font-size:16px"><button onclick="yokSil(\''+p+'\','+i+')" style="width:auto;padding:6px 14px;font-size:20px;border-radius:8px;border:0;background:#c0392b;color:#fff">×</button></div>').join('')}
+function yokEkle(p){oku();const d=durum[simdi];d.yokEk=d.yokEk||{};(d.yokEk[p]=d.yokEk[p]||[]).push({b:'',s:''});kilit=true;araclariCiz();kilit=false;kaydet()}
+function yokSil(p,i){oku();const d=durum[simdi];if(d.yokEk&&d.yokEk[p])d.yokEk[p].splice(i,1);kilit=true;araclariCiz();kilit=false;kaydet();hesapla()}
+function siraDurum(giris){
+ const p=document.getElementById('benim').value.trim();
+ oku();
+ if(!plakaListesi().includes(p)){alert('Plakanı listedeki gibi yaz (örnek 03). Listede yoksa doğru sekmede olduğuna bak.');return}
+ const n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+ const eb=document.querySelector('[data-yokb="'+p+'"]'),es=document.querySelector('[data-yoks="'+p+'"]');
+ if(!eb||!es){alert('Araç satırı bulunamadı');return}
+ if(giris){if(!eb.value){alert('Önce Sıradan çıktım tuşuna basmalısın');return}es.value=hm}
+ else{if(!confirm(p+' saat '+hm+' itibarıyla sıradan çıkıyor. Tamam mı?'))return;if(eb.value&&es.value&&es.value!='23:59'){const dd=durum[simdi];dd.yokEk=dd.yokEk||{};(dd.yokEk[p]=dd.yokEk[p]||[]).push({b:eb.value,s:es.value})}eb.value=hm;es.value='23:59'}
+ {const dd2=durum[simdi];dd2.yok=dd2.yok||{};dd2.yok[p]={b:eb.value,s:es.value}}kilit=true;araclariCiz();kilit=false;kaydet();hesapla();
+ alert(giris?p+' '+hm+' itibarıyla sıraya girdi. Kendi seferi dahil 7 sefer içinde yetiştiği ilk sefere girer.':p+' '+hm+' itibarıyla gün sonuna kadar yok sayılıyor.');
+}
 let SON_TXT=null,HARIC={},OKU=[];
 function okunanHtml(AD){if(!OKU.length)return '';const g={};OKU.forEach(o=>{(g[o.p]=g[o.p]||[]).push(o)});
  let h='<details class="bolum" open><summary>Okunan tekler – say / sayma</summary><div class="kucuk">İşaretini kaldırdığın tek hesaba girmez. Servis dışı okumaları kaldır, hesap kendiliğinden yenilenir.</div>';
@@ -476,6 +492,24 @@ function imleriCiz(){if(!HARITA)return;IMLER.forEach(m=>m.remove());IMLER=[];for
 function haritaKur(){if(HARITA){HARITA.remove();HARITA=null}const el=document.getElementById('harita');if(!el)return;if(!window.L){el.textContent='Harita yüklenemedi, internet var mı?';return}HARITA=L.map(el).setView([41.02,28.59],13);const kat={'Harita':L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap'}),'Harita 2':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}),'Uydu':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})};kat['Harita'].addTo(HARITA);L.control.layers(kat).addTo(HARITA);HARITA.on('click',ev=>{const n=document.getElementById('durakSec').value;if(!confirm(n+' buraya kaydedilsin mi?'))return;KONUM[n]=[ev.latlng.lat,ev.latlng.lng];durakKaydet();imleriCiz()});imleriCiz()}
 function durakSil(){const n=document.getElementById('durakSec').value;if(!KONUM[n])return;if(!confirm(n+' işareti silinsin mi?'))return;delete KONUM[n];durakKaydet();imleriCiz()}
 function durakKaydet(){if(FB)FB.collection('ayar').doc('duraklar').set({v:JSON.stringify(KONUM),z:Date.now()}).catch(e=>alert('Durak kaydedilemedi: '+e.code))}
+var TT_KEY=localStorage.getItem('ttkey')||'',TT={ad:null,sn:null,z:0,yuk:false};
+function ttKaydet(){const v=document.getElementById('ttKey').value.trim();TT_KEY=v;localStorage.setItem('ttkey',v);if(FB)FB.collection('ayar').doc('tomtom').set({k:v,z:Date.now()}).then(()=>alert('Anahtar kaydedildi, bütün cihazlar kullanacak')).catch(e=>alert('Kaydedilemedi: '+e.code));else alert('Bu cihaza kaydedildi')}
+function dkYaz(sn){return Math.max(0,Math.round(sn/60))+' dk'}
+function trafikSorgu(ad){if(TT.yuk)return;const n=Date.now();if(TT.ad===ad&&(TT.sn!=null||n-TT.z<60000))return;TT.yuk=true;const A=BENKONUM,B=KONUM[ad];
+ fetch('https://api.tomtom.com/routing/1/calculateRoute/'+A[0]+','+A[1]+':'+B[0]+','+B[1]+'/json?traffic=true&key='+encodeURIComponent(TT_KEY)).then(r=>r.json()).then(j=>{const s=j&&j.routes&&j.routes[0]&&j.routes[0].summary;TT={ad:ad,sn:s?s.travelTimeInSeconds:null,z:Date.now(),yuk:false,hata:s?'':(j&&j.detailedError&&j.detailedError.message)||'Yanıt yok'}}).catch(()=>{TT={ad:ad,sn:null,z:Date.now(),yuk:false,hata:'İnternet yok'}})}
+function trafikSatir(ad,k){
+ const st='text-align:center;margin:6px 0;';
+ if(!TT_KEY)return '';
+ if(!KONUM[ad])return '<p class="kucuk" style="'+st+'">'+ad+' haritada işaretli değil, trafik gösterilemiyor</p>';
+ if(!BENKONUM)return '<p class="kucuk" style="'+st+'">Konum bekleniyor... (konum iznini aç)</p>';
+ trafikSorgu(ad);
+ if(TT.ad!==ad||(TT.sn==null&&!TT.hata))return '<p class="kucuk" style="'+st+'">Trafik hesaplanıyor...</p>';
+ if(TT.sn==null)return '<p class="kucuk" style="'+st+'">Trafik alınamadı: '+TT.hata+'</p>';
+ const kalanTr=Math.max(0,TT.sn-Math.floor((Date.now()-TT.z)/1000));
+ const fark=kalanTr-k;const r=fark<=0?'#1fa36a':(fark<=120?'#f1c40f':'#e74c3c');
+ return '<div style="'+st+'font-size:26px;font-weight:bold;color:'+r+'">Varış '+dkYaz(kalanTr)+'</div>';
+}
+if(FB)FB.collection('ayar').doc('tomtom').onSnapshot(d=>{const x=d.data();if(x&&x.k){TT_KEY=x.k;localStorage.setItem('ttkey',x.k);const i=document.getElementById('ttKey');if(i&&!i.value)i.value=x.k}},e=>{});
 if(FB)FB.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v);imleriCiz()}catch(e){}}},e=>{});
 function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
 tarihSec(tarih,true);
