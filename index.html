@@ -43,6 +43,9 @@ button.ana{padding:16px;font-size:20px;background:#1fa36a;color:#fff;border:0;bo
 <div style="margin:6px 0"><label>Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)" style="font-size:18px;padding:8px;width:100%;box-sizing:border-box;border-radius:8px"></div>
 <div class="sekmeler"><button onclick="veriKopyala()">Verileri kopyala</button><button onclick="veriYapistir()">Verileri yapıştır</button></div>
 <div id="alan"></div>
+<div id="bulut" class="kucuk" style="text-align:center;margin:10px 0"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 const t=(h,m,s=0)=>h*3600+m*60+s;
 const fmt=x=>{const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+(s?':'+String(s).padStart(2,'0'):'')};
@@ -381,7 +384,7 @@ function takip(){
 function gunStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 let tarih=gunStr(new Date());
 function dbOku(){try{return JSON.parse(localStorage.getItem('sefer_db')||'{}')}catch(e){return {}}}
-function kaydet(){try{oku();const db=dbOku();db[tarih]={mim:durum.mim,mur:durum.mur,mevsim:mevsim};const s=gunStr(new Date(Date.now()-14*864e5));for(const k in db)if(k<s)delete db[k];localStorage.setItem('sefer_db',JSON.stringify(db))}catch(e){}}
+function kaydet(){try{oku();const db=dbOku();db[tarih]={mim:durum.mim,mur:durum.mur,mevsim:mevsim};const s='0000';for(const k in db)if(k<s)delete db[k];localStorage.setItem('sefer_db',JSON.stringify(db))}catch(e){}}
 function tarihSec(v,ilk){if(!v)return;if(!ilk)kaydet();tarih=v;const k=dbOku()[v];for(const b of ['mim','mur'])durum[b]=k&&k[b]?k[b]:{plakalar:'',tur:{},ariza:{},ortak:{}};if(k&&k.mevsim)mevsim=k.mevsim;const g=new Date(v+'T12:00').getDay();gun=g==6?'cmt':(g==0?'paz':'hi');gunButon();document.getElementById('tarih').value=v;ciz()}
 function veriKopyala(){
  kaydet();const s=JSON.stringify(dbOku());
@@ -393,7 +396,7 @@ function veriYapistir(){
  let y;try{y=JSON.parse(s)}catch(e){alert('Veri okunamadı, tamamını kopyaladığından emin ol.');return}
  const db=dbOku();for(const k in y)db[k]=y[k];
  localStorage.setItem('sefer_db',JSON.stringify(db));
- tarihSec(tarih,true);alert(Object.keys(y).length+' günlük kayıt eklendi.');
+ for(const k in y)bulutaGonder(k);tarihSec(tarih,true);alert(Object.keys(y).length+' günlük kayıt eklendi.');
 }
 function ciz(){
  const a=ayar(),d=durum[simdi];
@@ -411,6 +414,29 @@ function ciz(){
  araclariCiz();
  if(d.plakalar)hesapla();
 }
+const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
+let FB=null,hazir=false;const GONDER={},BT={};
+function bulutDurum(m){const e=document.getElementById('bulut');if(e)e.textContent=m}
+function bulutaGonder(k){
+ if(!FB||!hazir)return;const g=dbOku()[k];if(!g)return;
+ if(!(g.mim&&g.mim.plakalar)&&!(g.mur&&g.mur.plakalar))return;
+ const v=JSON.stringify(g);if(GONDER[k]===v)return;GONDER[k]=v;
+ FB.collection('gunler').doc(k).set({v:v,z:Date.now()}).then(()=>bulutDurum('☁ Kaydedildi, bütün cihazlar görüyor')).catch(e=>{delete GONDER[k];bulutDurum('☁ Kaydedilemedi: '+e.code)});
+}
+const kaydet0=kaydet;
+kaydet=function(){kaydet0();const k=tarih;clearTimeout(BT[k]);BT[k]=setTimeout(()=>bulutaGonder(k),1500)};
+try{
+ firebase.initializeApp(FBC);FB=firebase.firestore();bulutDurum('☁ Bağlanıyor...');
+ FB.collection('gunler').onSnapshot(sn=>{
+  const db=dbOku();let yenile=false;
+  sn.docChanges().forEach(c=>{if(c.type=='removed')return;const x=c.doc.data(),id=c.doc.id;if(!x||!x.v||GONDER[id]===x.v)return;try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}});
+  localStorage.setItem('sefer_db',JSON.stringify(db));
+  if(!hazir){hazir=true;const bul=new Set(sn.docs.map(d=>d.id));for(const k in db)if(!bul.has(k))bulutaGonder(k)}
+  const ae=document.activeElement;
+  if(yenile&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))tarihSec(tarih,true);
+  bulutDurum('☁ Bağlı – '+sn.size+' gün kayıtlı');
+ },e=>bulutDurum('☁ Bağlanamadı: '+e.code));
+}catch(e){bulutDurum('☁ Bulut yüklenemedi, internet var mı?')}
 tarihSec(tarih,true);
 document.addEventListener('change',()=>kaydet());
 document.addEventListener('input',()=>kaydet());
