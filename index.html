@@ -360,7 +360,7 @@ function duraklar0(dep){
 function aktifGoster(p,s,el){
  if(simdi!='mim')return false;
  let dep=null;
- for(const x of (PLAN[p]||[])){const D=duraklar(x);const ek=(GPS!==null&&KONUM['Atrium']&&!VARDI[x])?30*60:0;if(s>=x-15&&s<x+D[D.length-1][1]*60+ek&&!VARDI[x]){dep=x;break}}
+ for(const x of (PLAN[p]||[])){const D=duraklar(x);const LP=PLAN[p]||[];const nx=LP[LP.indexOf(x)+1];const son=Math.min(x+D[D.length-1][1]*60+600,nx!==undefined?nx-300:1e9);if(s>=x-15&&s<son&&!VARDI[x]){dep=x;break}}
  if(dep===null)return false;
  const D=duraklar(dep),e=s-dep;
  let ad='Fatih Market – kalkış',hedef=dep;
