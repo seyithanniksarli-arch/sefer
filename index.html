@@ -59,7 +59,8 @@ const t=(h,m,s=0)=>h*3600+m*60+s;
 const fmt=x=>{const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+(s?':'+String(s).padStart(2,'0'):'')};
 const ADLAR={nobetci:'Nöbetçi',dokuzcu:'Dokuzcu',takviye:'Takviye'};
 const GUNAD={hi:'Hafta içi',cmt:'Cumartesi',paz:'Pazar'};
-const mimTur=s=>(gun=='hi'&&((s>=t(7,24)&&s<t(8,30))||(s>=t(15,0)&&s<t(19,0))))?71*60:65*60;
+const stdUz=()=>gun=='hi'&&!(durum.mim&&durum.mim.uzatYok);
+const mimTur=s=>(stdUz()&&((s>=t(7,24)&&s<t(8,30))||(s>=t(15,0)&&s<t(19,0))))?71*60:65*60;
 const MIM={ad:'Mimarsinan',son:t(23,0),tur:s=>mimTur(s)+uzEk(s,99,'mim')*60,turler:['nobetci','dokuzcu','takviye'],sinir:{nobetci:t(23,0),dokuzcu:t(20,45),takviye:t(19,30)}};
 const MUR={ad:'Muratçeşme',son:t(22,0),tur:s=>45*60+uzEk(s,99,'mur')*60,turler:['nobetci','takviye'],sinir:{nobetci:t(22,0),takviye:t(19,30)}};
 const GUN={
@@ -98,6 +99,7 @@ function oku(){
  document.querySelectorAll('[data-tur]').forEach(x=>{d.tur[x.dataset.tur]=x.value});
  document.querySelectorAll('[data-ariza]').forEach(x=>{d.ariza[x.dataset.ariza]=x.checked});
  if(!d.ortak)d.ortak={};document.querySelectorAll('[data-ortak]').forEach(x=>{d.ortak[x.dataset.ortak]=x.checked});
+ {const c=document.getElementById('uzYok');if(c)durum.mim.uzatYok=c.checked}
  if(document.querySelector('[data-uzi]')){d.uzat=[];document.querySelectorAll('[data-uzi]').forEach(r=>{const g=x=>r.querySelector('[data-u="'+x+'"]').value;const e=[...r.querySelectorAll('[data-ue]')].map(x=>+x.value||0);if(g('b')&&g('s')&&e.some(x=>x))d.uzat.push({b:g('b'),s:g('s'),e:e})})}
  if(!d.yok)d.yok={};document.querySelectorAll('[data-yokb]').forEach(x=>{const p=x.dataset.yokb;d.yok[p]=d.yok[p]||{};d.yok[p].b=x.value});document.querySelectorAll('[data-yoks]').forEach(x=>{const p=x.dataset.yoks;d.yok[p]=d.yok[p]||{};d.yok[p].s=x.value});
 }
@@ -221,15 +223,14 @@ const ara=(s,a,b)=>s>=a&&s<b;
 function gec(varis,plan){const d=varis-plan;return d<60?0:Math.floor(d/30)/2}
 function cumaEk(o,yon,n,c){if(!c)return o;const e=yon=='g'?{taksidu:1,balk:1,morolu:1}:{macro2:1,atrium:1};return e[n]?[o[0]+1,o[1]+1]:o}
 async function carpiHesap(f){
- let el=document.getElementById('carpi');if(!f)return;
- el.innerHTML='<p>PDF okunuyor...</p>';
+ let el=document.getElementById('carpi');if(!f&&!SON_TXT)return;
  let txt;
- try{txt=await pdfOku(f)}catch(e){el.innerHTML='<p>PDF okunamadı. İnternet bağlantısı gerekli.</p>';return}
+ if(f){el.innerHTML='<p>PDF okunuyor...</p>';try{txt=await pdfOku(f)}catch(e){el.innerHTML='<p>PDF okunamadı. İnternet bağlantısı gerekli.</p>';return}SON_TXT=txt;HARIC={}}else txt=SON_TXT;
  {const dm=txt.match(/[İI]hlal:\s*\d+\s*\/\s*\d+\s*(\d\d)\.(\d\d)\.(\d{4})/);if(dm){const pt=dm[3]+'-'+dm[2]+'-'+dm[1];if(pt!==tarih){if(dbOku()[pt]){tarihSec(pt);el=document.getElementById('carpi')}else{alert(pt+' tarihli kayıtlı liste yok. Önce o günü seçip plakaları gir.');el.innerHTML='';return}}}}
  const {IS,SIRA}=ilkSeferler();
  const dt=txt.match(/[İI]hlal:\s*\d+\s*\/\s*\d+\s*(\d\d)\.(\d\d)\.(\d{4})/)||txt.match(/(\d\d)\.(\d\d)\.(\d{4})/);const CUMA=dt?new Date(+dt[3],+dt[2]-1,+dt[1]).getDay()==5:false;
  const d0=durum.mim;const ORT={};for(const p in (d0.ortak||{}))if(d0.ortak[p]&&!d0.ariza[p])ORT[p.replace(/\D/g,'')]=1;
- const EV={},AD={},TK={};
+ const EV={},AD={},TK={};OKU=[];
  const SLOT={};{const A=[];for(const p of txt.split(/Hat\s*No\s*:\s*/).slice(1)){const pm=p.match(/^\s*(\S+?)\s*Gidi/);if(!pm)continue;const k=pm[1].replace(/\D/g,'');for(const s of p.split(/#\s*\d+/).slice(1)){const q=s.replace(/BS:\s*\d\d:\d\d:\d\d/,'').replace(/[ÇİI]:/g,'').match(/^\s*Fatih\s+(\d\d):(\d\d):(\d\d)/);if(!q)continue;{const sx=s.replace(/BS:\s*\d\d:\d\d:\d\d/,'').replace(/TS:\s*\d\d:\d\d:\d\d/,'');const nz=(sx.match(/\d\d:\d\d:\d\d/g)||[]).filter(z=>z!='00:00:00').length;if(nz<6)continue}const tm=(+q[1])*3600+(+q[2])*60+(+q[3]);if(tm)A.push([tm,k])}}A.sort((x,y)=>x[0]-y[0]);const SF=seferler(Object.assign({},MIM,GUN[gun].mim));A.forEach((x,i)=>{if(i<SF.length)SLOT[x[1]+'@'+x[0]]=SF[i]})}
  for(const p of txt.split(/Hat\s*No\s*:\s*/).slice(1)){
   const pm=p.match(/^\s*(\S+?)\s*Gidi/);if(!pm)continue;
@@ -248,14 +249,14 @@ async function carpiHesap(f){
    if(!yon)continue;
    let ilkTek=false;
    if(yon=='g'){if(ilkYok&&IS[plk]!==undefined){base=IS[plk];ilkTek=true;ilkYok=false}else{const fd=d[0][1];const sl=SLOT[plk+'@'+fd];ilkYok=false;if(sl!==undefined)base=sl;else{base=null;continue}}}
-   if(base===null)continue;TK[plk][1]++;
-   const uz=(gun=='hi'&&(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0))))?1:0;
+   if(base===null)continue;if(yon=='g'&&ORT[plk]){const B=SIRA[SIRA.indexOf(plk)+1];const LB=B&&IS['_'+B];if(LB){const nb=LB.find(x=>x>base);if(nb!==undefined&&nb-base<=1200)base=nb}}TK[plk][1]++;
+   const uz=(stdUz()&&(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0))))?1:0;
    const mor=ara(base,t(8,0),t(9,0))||ara(base,t(15,30),t(16,30));
    let enb=0;
    for(const [n,tm] of d){const o0=OFS[yon][n];if(!o0)continue;const o=cumaEk(o0,yon,n,CUMA&&base>=t(12,0));if(n=='morolu'&&!mor)continue;if(n=='balk'&&mor)continue;if(tm<base||tm-base>3*3600)continue;enb=Math.max(enb,gec(tm,base+(o[uz]+uzEk(base,SIX[n+yon],'mim'))*60))}
    const sk=base+(yon=='d'?1:0),gs=yon=='g'?base:b;
    if(yon=='d')base=null;
-   if(enb>60||enb<=0)continue;
+   const hk=plk+'@'+sk;OKU.push({k:hk,p:plk,g:gs,enb:enb,yon:yon,ilk:ilkTek});if(HARIC[hk])continue;if(enb>60||enb<=0)continue;
    ev.push({tm:sk,g:gs,enb:enb,ilk:ilkTek,yon:yon,p:plk});
   }
  }
@@ -281,7 +282,7 @@ async function carpiHesap(f){
   if(tl&&arka)kimKime.push(ad+' → '+ar+': '+(carpi+ilkC)+' çarpı, '+tl+' TL');
   h+='<tr'+(tl?' class="uyari"':'')+'><td>'+ad+(u.length>1?' (ortak)':'')+'<br><span class="kucuk">okunan tek: '+u.map(x=>TK[x]?TK[x][1]+'/'+TK[x][0]:'-').join(', ')+'</span></td><td>'+kul+' / 10 dk</td><td>'+(carpi+ilkC)+(ilkC?' ('+ilkC+' ilk servis)':'')+'</td><td>'+tl+' TL'+(arka&&tl?' → '+ar:'')+'</td><td class="kucuk">'+det.join('<br>')+'</td></tr>';
  }
- el.innerHTML=h+'</table><p>Toplam: '+top+' çarpı, '+topTL+' TL. Sıkışma cezası henüz hesaba katılmıyor.</p><details><summary>PDF metni (kontrol)</summary><pre style="white-space:pre-wrap;font-size:11px">'+txt.slice(0,1500).replace(/</g,'&lt;')+'</pre></details>'+(kimKime.length?'<h3>Kim kime veriyor</h3><p>'+kimKime.join('<br>')+'</p>':'')+'<button class="ana" style="background:#c0392b" onclick="carpiPdf()">Çarpıları PDF olarak al</button>';
+ el.innerHTML=h+'</table>'+okunanHtml(AD)+'<p>Toplam: '+top+' çarpı, '+topTL+' TL. Sıkışma cezası henüz hesaba katılmıyor.</p><details><summary>PDF metni (kontrol)</summary><pre style="white-space:pre-wrap;font-size:11px">'+txt.slice(0,1500).replace(/</g,'&lt;')+'</pre></details>'+(kimKime.length?'<h3>Kim kime veriyor</h3><p>'+kimKime.join('<br>')+'</p>':'')+'<button class="ana" style="background:#c0392b" onclick="carpiPdf()">Çarpıları PDF olarak al</button>';
 }
 async function carpiHesapEski(f){
  const el=document.getElementById('carpi');if(!f)return;
@@ -353,7 +354,7 @@ let PLAN={},takipT=null,uyarildi={},ctx=null;
 function bip(f,d){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+d)}catch(e){}}
 function duraklar(dep){const c=new Date().getDay()==5&&dep>=t(12,0);const r=duraklar0(dep);return c?r.map(x=>[x[0],x[1]+({'Denizgören':1,'Moroğlu':1,'Balıkçı':1,'Makro':1,'Atrium':1}[x[0]]||0)]):r}
 function duraklar0(dep){
- const uz=(gun=='hi'&&(ara(dep,t(7,24),t(8,30))||ara(dep,t(15,0),t(19,0))))?1:0;
+ const uz=(stdUz()&&(ara(dep,t(7,24),t(8,30))||ara(dep,t(15,0),t(19,0))))?1:0;
  const mor=ara(dep,t(8,0),t(9,0))||ara(dep,t(15,30),t(16,30));
  return [['Doğan Gıda',4,4],['Makro Çarşı',7,7],['Denizgören',12,12],mor?['Moroğlu',16,16]:['Balıkçı',18,18],['Metrobüs',30,32],['TÜYAP',35,36],['Çekmece',43,44],['Mimar Sinan',49,52],['Meydan',55,60],['Makro',60,65],['Atrium',65,71]].map((x,i)=>[x[0],x[uz?2:1]+uzEk(dep,i,'mim')]);
 }
@@ -433,9 +434,15 @@ function uzatHtml(d){const L=(d.uzat||[]).slice();while(L.length<3)L.push({b:'',
  L.forEach(u=>{h+='<div data-uzi class="arac" style="flex-wrap:wrap;border-bottom:1px solid #2c3a4b;padding-bottom:8px"><input type="time" data-u="b" value="'+u.b+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto">–</span><input type="time" data-u="s" value="'+u.s+'" style="width:auto;height:auto;font-size:16px"><select data-u="i" style="flex:1;min-width:140px">'+UZ_DURAK.map((n,k)=>'<option value="'+k+'"'+(k==u.i?' selected':'')+'>'+n+'\'dan itibaren</option>').join('')+'</select><span class="kucuk" style="width:auto">+</span><input type="number" data-u="m" value="'+u.m+'" min="0" step="0.5" style="width:70px;height:auto;font-size:18px"><span class="kucuk" style="width:auto">dk</span></div>'});
  return h+'<button class="ana" onclick="oku();kaydet();hesapla()">Uygula ve hesapla</button></details>'}
 function uzatHtml2(d){const L=(d.uzat||[]).filter(u=>u.e);while(L.length<2)L.push({b:'',s:'',e:[]});
- let h='<details class="bolum" data-k="uzat"'+ac('uzat')+'><summary>Günün uzatması</summary><p class="kucuk">Sadece bu gün için. Fatih\'ten kalkış saat aralığını yaz, her durağın planına kaç dakika eklendiğini gir. Boş durak değişmez. Atrium\'a yazdığın dakika tur süresine de eklenir.</p>';
+ let h='<details class="bolum" data-k="uzat"'+ac('uzat')+'><summary>Günün uzatması</summary><label style="display:flex;gap:10px;align-items:center;font-size:18px;color:#ffcf5a;margin:6px 0 10px"><input type="checkbox" id="uzYok" style="width:28px;height:28px" onchange="oku();kaydet();hesapla()"'+(durum.mim.uzatYok?' checked':'')+'>Standart uzatmaları sayma (okul tatili, normal saatler)</label><p class="kucuk">Sadece bu gün için. Fatih\'ten kalkış saat aralığını yaz, her durağın planına kaç dakika eklendiğini gir. Boş durak değişmez. Atrium\'a yazdığın dakika tur süresine de eklenir.</p>';
  L.forEach(u=>{h+='<div data-uzi style="border-bottom:1px solid #2c3a4b;padding:8px 0"><div class="arac"><input type="time" data-u="b" value="'+u.b+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto">–</span><input type="time" data-u="s" value="'+u.s+'" style="width:auto;height:auto;font-size:16px"></div>'+UZ_DURAK.map((n,k)=>'<div class="arac"><span class="kucuk" style="width:150px;font-size:16px">'+n+'</span><input type="number" data-ue="'+k+'" value="'+(u.e[k]||'')+'" min="0" step="0.5" placeholder="0" style="width:80px;height:auto;font-size:18px"><span class="kucuk" style="width:auto">dk</span></div>').join('')+'</div>'});
  return h+'<button class="ana" onclick="oku();kaydet();hesapla()">Uygula ve hesapla</button></details>'}
+let SON_TXT=null,HARIC={},OKU=[];
+function okunanHtml(AD){if(!OKU.length)return '';const g={};OKU.forEach(o=>{(g[o.p]=g[o.p]||[]).push(o)});
+ let h='<details class="bolum" open><summary>Okunan tekler – say / sayma</summary><div class="kucuk">İşaretini kaldırdığın tek hesaba girmez. Servis dışı okumaları kaldır, hesap kendiliğinden yenilenir.</div>';
+ for(const p in g){h+='<div style="margin-top:10px;font-weight:bold;font-size:18px">'+((AD&&AD[p])||p)+'</div>';g[p].sort((a,b)=>a.g-b.g).forEach(o=>{h+='<label style="display:flex;gap:8px;align-items:center;margin:4px 0;font-size:16px;color:'+(HARIC[o.k]?'#6b7a8c':'#e8edf3')+'"><input type="checkbox" style="width:24px;height:24px"'+(HARIC[o.k]?'':' checked')+' onchange="tekSec(\''+o.k+'\',this.checked)">'+(o.yon=='g'?'Gidiş ':'Dönüş ')+fmt(o.g)+(o.ilk?' (ilk servis)':'')+' – '+(o.enb>60?'60+ dk, zaten sayılmıyor':(o.enb>0?o.enb+' dk geç':'zamanında'))+'</label>'})}
+ return h+'</details>'}
+function tekSec(k,v){if(v)delete HARIC[k];else HARIC[k]=1;carpiHesap()}
 let ACIK={sira:1};try{ACIK=JSON.parse(localStorage.getItem('acik')||'{"sira":1}')}catch(e){}
 function ac(k){return ACIK[k]?' open':''}
 document.addEventListener('toggle',e=>{const k=e.target&&e.target.dataset&&e.target.dataset.k;if(!k)return;ACIK[k]=e.target.open?1:0;try{localStorage.setItem('acik',JSON.stringify(ACIK))}catch(x){}if(k=='harita'&&e.target.open&&HARITA)setTimeout(()=>HARITA.invalidateSize(),60)},true);
