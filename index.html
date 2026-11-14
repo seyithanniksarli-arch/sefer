@@ -24,6 +24,12 @@ tr.uyari td{background:#5a2328}
 tr.bos td{background:#4a3d12}
 button.ana{padding:16px;font-size:20px;background:#1fa36a;color:#fff;border:0;border-radius:10px;width:100%;margin:12px 0}
 .kucuk{color:#9fb0c3;font-size:15px}
+details.bolum{background:#16202b;border:1px solid #2c3a4b;border-radius:10px;margin:10px 0;padding:0 10px}
+details.bolum>summary{font-size:20px;font-weight:bold;padding:14px 4px;cursor:pointer;list-style:none}
+details.bolum>summary::-webkit-details-marker{display:none}
+details.bolum>summary::before{content:'▶ ';color:#1fa36a}
+details.bolum[open]>summary::before{content:'▼ '}
+details.bolum[open]{padding-bottom:10px}
 </style>
 </head>
 <body>
@@ -53,9 +59,9 @@ const t=(h,m,s=0)=>h*3600+m*60+s;
 const fmt=x=>{const h=Math.floor(x/3600),m=Math.floor(x%3600/60),s=x%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+(s?':'+String(s).padStart(2,'0'):'')};
 const ADLAR={nobetci:'Nöbetçi',dokuzcu:'Dokuzcu',takviye:'Takviye'};
 const GUNAD={hi:'Hafta içi',cmt:'Cumartesi',paz:'Pazar'};
-const mimTur=s=>((s>=t(7,24)&&s<t(8,30))||(s>=t(15,0)&&s<t(19,0)))?71*60:65*60;
-const MIM={ad:'Mimarsinan',son:t(23,0),tur:mimTur,turler:['nobetci','dokuzcu','takviye'],sinir:{nobetci:t(23,0),dokuzcu:t(20,45),takviye:t(19,30)}};
-const MUR={ad:'Muratçeşme',son:t(22,0),tur:s=>45*60,turler:['nobetci','takviye'],sinir:{nobetci:t(22,0),takviye:t(19,30)}};
+const mimTur=s=>(gun=='hi'&&((s>=t(7,24)&&s<t(8,30))||(s>=t(15,0)&&s<t(19,0))))?71*60:65*60;
+const MIM={ad:'Mimarsinan',son:t(23,0),tur:s=>mimTur(s)+uzEk(s,99,'mim')*60,turler:['nobetci','dokuzcu','takviye'],sinir:{nobetci:t(23,0),dokuzcu:t(20,45),takviye:t(19,30)}};
+const MUR={ad:'Muratçeşme',son:t(22,0),tur:s=>45*60+uzEk(s,99,'mur')*60,turler:['nobetci','takviye'],sinir:{nobetci:t(22,0),takviye:t(19,30)}};
 const GUN={
  hi:{
   mim:{sabah:[[5,54],[6,2],[6,10],[6,17],[6,25],[6,32,30],[6,40],[6,48],[6,54],[7,0],[7,6],[7,12],[7,18],[7,24],[7,30]],
@@ -92,6 +98,7 @@ function oku(){
  document.querySelectorAll('[data-tur]').forEach(x=>{d.tur[x.dataset.tur]=x.value});
  document.querySelectorAll('[data-ariza]').forEach(x=>{d.ariza[x.dataset.ariza]=x.checked});
  if(!d.ortak)d.ortak={};document.querySelectorAll('[data-ortak]').forEach(x=>{d.ortak[x.dataset.ortak]=x.checked});
+ if(document.querySelector('[data-uzi]')){d.uzat=[];document.querySelectorAll('[data-uzi]').forEach(r=>{const g=x=>r.querySelector('[data-u="'+x+'"]').value;const e=[...r.querySelectorAll('[data-ue]')].map(x=>+x.value||0);if(g('b')&&g('s')&&e.some(x=>x))d.uzat.push({b:g('b'),s:g('s'),e:e})})}
  if(!d.yok)d.yok={};document.querySelectorAll('[data-yokb]').forEach(x=>{const p=x.dataset.yokb;d.yok[p]=d.yok[p]||{};d.yok[p].b=x.value});document.querySelectorAll('[data-yoks]').forEach(x=>{const p=x.dataset.yoks;d.yok[p]=d.yok[p]||{};d.yok[p].s=x.value});
 }
 function plakaListesi(){return durum[simdi].plakalar.split(/[\s,;]+/).filter(x=>x)}
@@ -242,10 +249,10 @@ async function carpiHesap(f){
    let ilkTek=false;
    if(yon=='g'){if(ilkYok&&IS[plk]!==undefined){base=IS[plk];ilkTek=true;ilkYok=false}else{const fd=d[0][1];const sl=SLOT[plk+'@'+fd];ilkYok=false;if(sl!==undefined)base=sl;else{base=null;continue}}}
    if(base===null)continue;TK[plk][1]++;
-   const uz=(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0)))?1:0;
+   const uz=(gun=='hi'&&(ara(base,t(7,24),t(8,30))||ara(base,t(15,0),t(19,0))))?1:0;
    const mor=ara(base,t(8,0),t(9,0))||ara(base,t(15,30),t(16,30));
    let enb=0;
-   for(const [n,tm] of d){const o0=OFS[yon][n];if(!o0)continue;const o=cumaEk(o0,yon,n,CUMA&&base>=t(12,0));if(n=='morolu'&&!mor)continue;if(n=='balk'&&mor)continue;if(tm<base||tm-base>3*3600)continue;enb=Math.max(enb,gec(tm,base+o[uz]*60))}
+   for(const [n,tm] of d){const o0=OFS[yon][n];if(!o0)continue;const o=cumaEk(o0,yon,n,CUMA&&base>=t(12,0));if(n=='morolu'&&!mor)continue;if(n=='balk'&&mor)continue;if(tm<base||tm-base>3*3600)continue;enb=Math.max(enb,gec(tm,base+(o[uz]+uzEk(base,SIX[n+yon],'mim'))*60))}
    const sk=base+(yon=='d'?1:0),gs=yon=='g'?base:b;
    if(yon=='d')base=null;
    if(enb>60||enb<=0)continue;
@@ -346,9 +353,9 @@ let PLAN={},takipT=null,uyarildi={},ctx=null;
 function bip(f,d){try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+d)}catch(e){}}
 function duraklar(dep){const c=new Date().getDay()==5&&dep>=t(12,0);const r=duraklar0(dep);return c?r.map(x=>[x[0],x[1]+({'Denizgören':1,'Moroğlu':1,'Balıkçı':1,'Makro':1,'Atrium':1}[x[0]]||0)]):r}
 function duraklar0(dep){
- const uz=(ara(dep,t(7,24),t(8,30))||ara(dep,t(15,0),t(19,0)))?1:0;
+ const uz=(gun=='hi'&&(ara(dep,t(7,24),t(8,30))||ara(dep,t(15,0),t(19,0))))?1:0;
  const mor=ara(dep,t(8,0),t(9,0))||ara(dep,t(15,30),t(16,30));
- return [['Doğan Gıda',4,4],['Makro Çarşı',7,7],['Denizgören',12,12],mor?['Moroğlu',16,16]:['Balıkçı',18,18],['Metrobüs',30,32],['TÜYAP',35,36],['Çekmece',43,44],['Mimar Sinan',49,52],['Meydan',55,60],['Makro',60,65],['Atrium',65,71]].map(x=>[x[0],x[uz?2:1]]);
+ return [['Doğan Gıda',4,4],['Makro Çarşı',7,7],['Denizgören',12,12],mor?['Moroğlu',16,16]:['Balıkçı',18,18],['Metrobüs',30,32],['TÜYAP',35,36],['Çekmece',43,44],['Mimar Sinan',49,52],['Meydan',55,60],['Makro',60,65],['Atrium',65,71]].map((x,i)=>[x[0],x[uz?2:1]+uzEk(dep,i,'mim')]);
 }
 function aktifGoster(p,s,el){
  if(simdi!='mim')return false;
@@ -404,19 +411,34 @@ function ciz(){
  const a=ayar(),d=durum[simdi];
  document.getElementById('alan').innerHTML=
   '<h2>'+a.ad+' – '+GUNAD[gun]+'</h2>'+
-  '<label>Plakalar, kahyanın sırasıyla (boşluk veya virgülle)</label>'+
+  '<details class="bolum" data-k="sira"'+ac('sira')+'><summary>Sıra ve araçlar</summary><label>Plakalar, kahyanın sırasıyla (boşluk veya virgülle)</label>'+
   '<textarea id="liste" rows="3" oninput="araclariCiz()">'+d.plakalar+'</textarea>'+
   '<h3>Araç türleri</h3><div id="araclar"></div>'+
   '<button class="ana" onclick="hesapla()">Hesapla</button>'+
   '<button class="ana" style="background:#2f6fd6" onclick="excel()">Excel olarak indir</button>'+
-  '<button class="ana" style="background:#c0392b" onclick="pdf()">PDF / Yazdır</button>'+
-  '<h3>Benim aracım – alarm</h3><input id="benim" placeholder="Plakan, örnek 03" style="width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px"><button class="ana" style="background:#8e44ad" onclick="takip()">Takibi başlat</button><div id="sayac"></div>'+
-  '<h3>Çarpı hesabı (GPS PDF)</h3><input type="file" accept="application/pdf" onchange="carpiHesap(this.files[0])"><div id="carpi"></div>'+
-  '<h3>Durak haritası</h3><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p>'+
-  '<div id="sonuc"></div>';
+  '<button class="ana" style="background:#c0392b" onclick="pdf()">PDF / Yazdır</button></details>'+
+  uzatHtml2(d)+
+  '<details class="bolum" data-k="takip"'+ac('takip')+'><summary>Benim aracım – takip</summary><input id="benim" placeholder="Plakan, örnek 03" style="width:100%;box-sizing:border-box;font-size:20px;padding:10px;border-radius:8px"><button class="ana" style="background:#8e44ad" onclick="takip()">Takibi başlat</button><div id="sayac"></div></details>'+
+  '<details class="bolum" data-k="carpi"'+ac('carpi')+'><summary>Çarpı hesabı (GPS PDF)</summary><input type="file" accept="application/pdf" onchange="carpiHesap(this.files[0])"><div id="carpi"></div></details>'+
+  '<details class="bolum" data-k="harita"'+ac('harita')+'><summary>Durak haritası</summary><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p></details>'+
+  '<details class="bolum" data-k="sonuc"'+ac('sonuc')+'><summary>Seferler</summary><div id="sonuc"></div></details>';
  araclariCiz();setTimeout(haritaKur,50);
  if(d.plakalar)hesapla();
 }
+const UZ_DURAK=['Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu / Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium'];
+const SIX={doangg:0,macrog:1,taksidug:2,morolug:3,balkg:3,metrobg:4,tyap2d:5,atirus2d:6,eczane2d:7,taksidud:8,macro2d:9,atriumd:10};
+function uzEk(dep,i,b){const d=durum[b||'mim'];const L=(d&&d.uzat)||[];let e=0;for(const u of L){const q=u.b.split(':'),r=u.s.split(':');if(dep>=t(+q[0],+q[1])&&dep<t(+r[0],+r[1])){if(u.e)e+=(i==99?(u.e[10]||0):(u.e[i]||0));else if(i>=u.i)e+=u.m}}return e}
+function uzatHtml(d){const L=(d.uzat||[]).slice();while(L.length<3)L.push({b:'',s:'',i:5,m:''});
+ let h='<details class="bolum" data-k="uzat"'+ac('uzat')+'><summary>Günün uzatması</summary><p class="kucuk">Sadece bu gün için. Fatih\'ten kalkış saat aralığını, uzatmanın başladığı durağı ve kaç dakika eklendiğini yaz. O duraktan sonraki bütün duraklara ve tur süresine eklenir.</p>';
+ L.forEach(u=>{h+='<div data-uzi class="arac" style="flex-wrap:wrap;border-bottom:1px solid #2c3a4b;padding-bottom:8px"><input type="time" data-u="b" value="'+u.b+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto">–</span><input type="time" data-u="s" value="'+u.s+'" style="width:auto;height:auto;font-size:16px"><select data-u="i" style="flex:1;min-width:140px">'+UZ_DURAK.map((n,k)=>'<option value="'+k+'"'+(k==u.i?' selected':'')+'>'+n+'\'dan itibaren</option>').join('')+'</select><span class="kucuk" style="width:auto">+</span><input type="number" data-u="m" value="'+u.m+'" min="0" step="0.5" style="width:70px;height:auto;font-size:18px"><span class="kucuk" style="width:auto">dk</span></div>'});
+ return h+'<button class="ana" onclick="oku();kaydet();hesapla()">Uygula ve hesapla</button></details>'}
+function uzatHtml2(d){const L=(d.uzat||[]).filter(u=>u.e);while(L.length<2)L.push({b:'',s:'',e:[]});
+ let h='<details class="bolum" data-k="uzat"'+ac('uzat')+'><summary>Günün uzatması</summary><p class="kucuk">Sadece bu gün için. Fatih\'ten kalkış saat aralığını yaz, her durağın planına kaç dakika eklendiğini gir. Boş durak değişmez. Atrium\'a yazdığın dakika tur süresine de eklenir.</p>';
+ L.forEach(u=>{h+='<div data-uzi style="border-bottom:1px solid #2c3a4b;padding:8px 0"><div class="arac"><input type="time" data-u="b" value="'+u.b+'" style="width:auto;height:auto;font-size:16px"><span class="kucuk" style="width:auto">–</span><input type="time" data-u="s" value="'+u.s+'" style="width:auto;height:auto;font-size:16px"></div>'+UZ_DURAK.map((n,k)=>'<div class="arac"><span class="kucuk" style="width:150px;font-size:16px">'+n+'</span><input type="number" data-ue="'+k+'" value="'+(u.e[k]||'')+'" min="0" step="0.5" placeholder="0" style="width:80px;height:auto;font-size:18px"><span class="kucuk" style="width:auto">dk</span></div>').join('')+'</div>'});
+ return h+'<button class="ana" onclick="oku();kaydet();hesapla()">Uygula ve hesapla</button></details>'}
+let ACIK={sira:1};try{ACIK=JSON.parse(localStorage.getItem('acik')||'{"sira":1}')}catch(e){}
+function ac(k){return ACIK[k]?' open':''}
+document.addEventListener('toggle',e=>{const k=e.target&&e.target.dataset&&e.target.dataset.k;if(!k)return;ACIK[k]=e.target.open?1:0;try{localStorage.setItem('acik',JSON.stringify(ACIK))}catch(x){}if(k=='harita'&&e.target.open&&HARITA)setTimeout(()=>HARITA.invalidateSize(),60)},true);
 const DURAK_ADLARI=['Fatih Market','Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu','Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium'];
 let KONUM={},HARITA=null,IMLER=[],GPS=null,BENKONUM=null;const VARDI={};
 const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
