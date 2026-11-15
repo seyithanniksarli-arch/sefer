@@ -6,33 +6,51 @@
 <title>Minibüs Nerede?</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0;padding:14px;background:#f4f6f8;color:#14202b;font-size:18px}
-h1{font-size:26px;margin:4px 0 12px;text-align:center}
-select,button{font-size:20px;padding:14px;border-radius:12px;width:100%;box-sizing:border-box}
-select{border:1px solid #c5cfd8;background:#fff}
-button{border:0;background:#1fa36a;color:#fff;font-weight:bold;margin-top:8px}
-.kart{background:#fff;border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.hat{font-size:15px;color:#5b6b7a;font-weight:bold;margin-bottom:6px}
-.sat{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #edf0f3}
-.sat:first-of-type{border-top:0}
-.dk{font-size:34px;font-weight:bold;color:#1fa36a;min-width:110px;text-align:right}
+:root{--yesil:#1fa36a;--koyu:#0f8a57;--lac:#10202e;--mavi:#16507e;--sari:#ffcf33;--zemin:#eef2f5;--gri:#5b6b7a}
+body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--lac);font-size:18px}
+.ust{background:linear-gradient(135deg,#0f8a57 0%,#1fa36a 45%,#16507e 100%);color:#fff;padding:22px 18px 52px;position:relative;overflow:hidden}
+.ust::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-24px;height:48px;background:var(--zemin);border-radius:50% 50% 0 0}
+.ust .ust1{display:flex;align-items:center;justify-content:space-between}
+.ust .ik{width:52px;height:52px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.ust .kod{background:var(--sari);color:var(--lac);font-weight:900;font-size:15px;padding:6px 11px;border-radius:9px;letter-spacing:.5px}
+.ust h1{font-size:34px;line-height:1;margin:16px 0 0;font-weight:900;letter-spacing:-.5px}
+.ust p{margin:8px 0 0;font-size:16px;font-weight:600;opacity:.93}
+.ic{padding:0 14px 24px;position:relative;z-index:1}
+.secim{background:#fff;border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(16,32,46,.08)}
+.secim small{display:block;font-size:12px;letter-spacing:2px;color:var(--yesil);font-weight:800;margin:0 2px 8px}
+select,button{font-family:inherit;font-size:19px;padding:14px;border-radius:12px;width:100%;box-sizing:border-box}
+select{border:1.5px solid #d5dde5;background:#fff;color:var(--lac);font-weight:700;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%231fa36a' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+select:focus{outline:none;border-color:var(--yesil);box-shadow:0 0 0 3px rgba(31,163,106,.18)}
+button{border:0;background:var(--lac);color:#fff;font-weight:800;margin-top:10px}
+.kart{background:#fff;border-radius:18px;padding:14px 16px;margin:14px 0;box-shadow:0 2px 10px rgba(16,32,46,.08)}
+.hat{display:inline-block;font-size:14px;font-weight:800;padding:5px 12px;border-radius:20px;background:#e6effb;color:#1e63b8;margin-bottom:6px}
+.hat.mur{background:#fdeceb;color:#d33b34}
+.sat{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid #edf0f3}
+.hat+.sat{border-top:0}
+.plk{font-size:24px;font-weight:900}
+.dk{font-size:34px;font-weight:900;color:var(--yesil);min-width:110px;text-align:right;letter-spacing:-.5px}
 .dk.yakin{color:#e67e22}
-.plk{font-size:22px;font-weight:bold}
-.kucuk{font-size:14px;color:#5b6b7a}
-.canli{display:inline-block;background:#e74c3c;color:#fff;font-size:12px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
-#harita{height:260px;border-radius:14px;margin-top:12px}
-.bilgi{text-align:center;color:#5b6b7a;font-size:15px;margin:10px 0}
+.kucuk{font-size:14px;color:var(--gri);margin-top:2px}
+.canli{display:inline-block;background:#e74c3c;color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;animation:nabiz 1.6s infinite}
+@keyframes nabiz{50%{opacity:.55}}
+#harita{height:260px;border-radius:18px;margin-top:14px;box-shadow:0 2px 10px rgba(16,32,46,.08)}
+.bilgi{text-align:center;color:var(--gri);font-size:15px;margin:14px 6px}
+.alt{background:var(--lac);color:#fff;text-align:center;padding:16px;font-size:14px;font-weight:600}
+.alt b{background:var(--sari);color:var(--lac);padding:3px 9px;border-radius:7px;margin-left:6px;font-weight:900}
 @media print{button{display:none}}
 </style>
 </head>
 <body>
 <div id="ana">
-<h1>🚐 Minibüs Nerede?</h1>
-<select id="durak" onchange="durakSec(this.value)"></select>
-<button onclick="konumBul()">📍 En yakın durağı bul</button>
+<div class="ust"><div class="ust1"><div class="ik"><svg viewBox="0 0 64 64" width="34" height="34" fill="none"><rect x="6" y="14" width="50" height="30" rx="7" fill="#fff"/><rect x="12" y="19" width="12" height="10" rx="2" fill="#1fa36a"/><rect x="27" y="19" width="12" height="10" rx="2" fill="#1fa36a"/><rect x="42" y="19" width="9" height="10" rx="2" fill="#1fa36a"/><circle cx="18" cy="46" r="6" fill="#10202e" stroke="#fff" stroke-width="3"/><circle cx="44" cy="46" r="6" fill="#10202e" stroke="#fff" stroke-width="3"/></svg></div><div class="kod">BL-105</div></div><h1>Minibüs nerede?</h1><p>Kaç dakikada geleceğini hemen gör.</p></div>
+<div class="ic">
+<div class="secim"><small>DURAĞINI SEÇ</small><select id="durak" onchange="durakSec(this.value)"></select>
+<button onclick="konumBul()">📍 En yakın durağı bul</button></div>
 <div id="liste"><p class="bilgi">Yükleniyor...</p></div>
 <div id="harita"></div>
 <p class="bilgi">Süreler sefer planına göre hesaplanır. <span class="canli">CANLI</span> yazanlarda minibüsün gerçek konumu kullanılır.</p>
+</div>
+<div class="alt">Ücretsiz · Uygulama indirmeye gerek yok <b>BL-105</b></div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -110,7 +128,7 @@ function ciz(){
  const n=simdiSn();let h='',var_=false;
  for(const hat of ['mim','mur'])for(const yon of ['g','d']){
   const L=gelenler(hat,yon);if(!L.length)continue;var_=true;
-  h+='<div class="kart"><div class="hat">'+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
+  h+='<div class="kart"><div class="hat '+hat+'">● '+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
   for(const x of L){const k=Math.max(0,Math.round((x.t-n)/60));
    h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+'">'+(k==0?'Geliyor':k+' dk')+'</div></div>'}
   h+='</div>';
@@ -148,8 +166,8 @@ function qrSayfa(){
  .durak small{display:block;font-size:4.5mm;letter-spacing:1.2mm;color:#1fa36a;font-weight:800}
  .durak b{display:block;font-size:11mm;line-height:1.05;font-weight:900;margin-top:1.5mm}
  .hatlar{display:flex;gap:3mm;flex-wrap:wrap;margin-top:4mm}
- .hatlar i{font-style:normal;font-size:4.6mm;font-weight:800;padding:2mm 4.5mm;border-radius:20mm;background:#eaf6f0;color:#0f8a57}
- .hatlar i.mur{background:#e8f0f9;color:#16507e}
+ .hatlar i{font-style:normal;font-size:4.6mm;font-weight:800;padding:2mm 4.5mm;border-radius:20mm;background:#e6effb;color:#1e63b8}
+ .hatlar i.mur{background:#fdeceb;color:#d33b34}
  .orta{flex:1;min-height:0;display:flex;align-items:center;gap:9mm;padding:8mm 14mm 4mm}
  .qrk{background:#fff;border:2.2mm solid #10202e;border-radius:9mm;padding:6mm;flex-shrink:0;position:relative}
  .qrk::before{content:"OKUT";position:absolute;top:-6.5mm;left:50%;transform:translateX(-50%);background:#ffcf33;color:#10202e;font-weight:900;font-size:5mm;letter-spacing:1mm;padding:1.5mm 5mm;border-radius:10mm}
