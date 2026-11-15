@@ -354,6 +354,7 @@ function carpiPdf(){
 }
 let PLAN={},takipT=null,uyarildi={},ctx=null;
 let AKT=null,GEC=null,GECZ=0,CG=0;const PY={};
+function ikiHat(){if(kilit||tarih!==gunStr(new Date()))return;const o=simdi,og=gun;try{oku();kilit=true;for(const b of ['mim','mur']){if(b===o||!durum[b].plakalar)continue;simdi=b;gun=gunOf(b);hesapla()}}catch(e){}simdi=o;gun=og;if(durum[o].plakalar)hesapla();else PLAN={};kilit=false}
 function planYayinla(){try{if(!FB||tarih!==gunStr(new Date()))return;const Lp=[];for(const p in PLAN)for(const s of PLAN[p])Lp.push([s,p,dur2(s,simdi).map(x=>[x[0],x[1]])]);Lp.sort((a,b)=>a[0]-b[0]);const v=JSON.stringify(Lp);if(PY[simdi]===v)return;PY[simdi]=v;const o={z:Date.now()};o[simdi]=v;FB.collection('plan').doc(tarih).set(o,{merge:true}).catch(()=>{delete PY[simdi]})}catch(e){}}
 function canliGonder(p){if(!FB||!BENKONUM||Date.now()-CG<15000)return;CG=Date.now();FB.collection('canli').doc(p).set({lat:BENKONUM[0],lng:BENKONUM[1],z:Date.now(),hat:TB||simdi,dep:AKT,gec:(Date.now()-GECZ<120000)?GEC:null}).catch(()=>{})}
 let TP=null,TB=null;
@@ -433,7 +434,7 @@ function ciz(){
   '<details class="bolum" data-k="harita"'+ac('harita')+'><summary>Durak haritası</summary><p class="kucuk">Durağı seç, haritada yerine dokun. Bütün cihazlara kaydedilir.</p><select id="durakSec" style="width:100%;font-size:18px;padding:10px;border-radius:8px">'+DURAK_ADLARI.map(n=>'<option>'+n+'</option>').join('')+'</select><button class="ana" style="background:#7f8c8d;padding:10px;font-size:16px" onclick="durakSil()">Seçili durağın işaretini sil</button><div id="harita" style="height:380px;border-radius:10px"></div><p id="durakBilgi" class="kucuk"></p><label>TomTom trafik anahtarı</label><input id="ttKey" value="'+(TT_KEY||'')+'" placeholder="Anahtarı buraya yapıştır" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:8px"><button class="ana" style="background:#2f6fd6;padding:10px;font-size:16px" onclick="ttKaydet()">Anahtarı kaydet</button></details>'+
   '<details class="bolum" data-k="sonuc"'+ac('sonuc')+'><summary>Seferler</summary><div id="sonuc"></div></details>';
  siraDiz();araclariCiz();setTimeout(haritaKur,50);
- if(d.plakalar)hesapla();
+ if(d.plakalar)hesapla();ikiHat();
 }
 const UZ_DURAK=['Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu / Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium'];
 const SIX={doangg:0,macrog:1,taksidug:2,morolug:3,balkg:3,metrobg:4,tyap2d:5,atirus2d:6,eczane2d:7,taksidud:8,macro2d:9,atriumd:10};
