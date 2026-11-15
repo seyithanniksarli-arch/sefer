@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minibüs Nerede?</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0;padding:14px;background:#f4f6f8;color:#14202b;font-size:18px}
+h1{font-size:26px;margin:4px 0 12px;text-align:center}
+select,button{font-size:20px;padding:14px;border-radius:12px;width:100%;box-sizing:border-box}
+select{border:1px solid #c5cfd8;background:#fff}
+button{border:0;background:#1fa36a;color:#fff;font-weight:bold;margin-top:8px}
+.kart{background:#fff;border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.hat{font-size:15px;color:#5b6b7a;font-weight:bold;margin-bottom:6px}
+.sat{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #edf0f3}
+.sat:first-of-type{border-top:0}
+.dk{font-size:34px;font-weight:bold;color:#1fa36a;min-width:110px;text-align:right}
+.dk.yakin{color:#e67e22}
+.plk{font-size:22px;font-weight:bold}
+.kucuk{font-size:14px;color:#5b6b7a}
+.canli{display:inline-block;background:#e74c3c;color:#fff;font-size:12px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+#harita{height:260px;border-radius:14px;margin-top:12px}
+.bilgi{text-align:center;color:#5b6b7a;font-size:15px;margin:10px 0}
+.qr{display:inline-block;width:46%;margin:2%;text-align:center;page-break-inside:avoid;border:2px dashed #999;padding:10px;box-sizing:border-box}
+.qr h2{font-size:22px;margin:6px 0}
+@media print{button{display:none}}
+</style>
+</head>
+<body>
+<div id="ana">
+<h1>🚐 Minibüs Nerede?</h1>
+<select id="durak" onchange="durakSec(this.value)"></select>
+<button onclick="konumBul()">📍 En yakın durağı bul</button>
+<div id="liste"><p class="bilgi">Yükleniyor...</p></div>
+<div id="harita"></div>
+<p class="bilgi">Süreler sefer planına göre hesaplanır. <span class="canli">CANLI</span> yazanlarda minibüsün gerçek konumu kullanılır.</p>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const DURAKLAR=['Fatih Market','Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu','Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium','Muratçeşme','Göbek','Kiptaş','Akbelde','Hastane'];
+const KALKIS={mim:'Fatih Market',mur:'Muratçeşme'};
+const HATAD={mim:'Mimarsinan hattı',mur:'Muratçeşme hattı'};
+const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
+const q=new URLSearchParams(location.search);
+let PLAN={mim:[],mur:[]},KONUM={},CANLI={},secili=q.get('durak')||'',HAR=null,IM=[],planVar=false;
+function bugun(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function simdiSn(){const n=new Date();return n.getHours()*3600+n.getMinutes()*60+n.getSeconds()}
+function saat(x){x=Math.round(x);return String(Math.floor(x/3600)%24).padStart(2,'0')+':'+String(Math.floor(x%3600/60)).padStart(2,'0')}
+function mesafe(a,b){const R=6371e3,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+
+if(q.has('qr')){qrSayfa()}else{baslat()}
+
+function baslat(){
+ const s=document.getElementById('durak');
+ s.innerHTML='<option value="">Durağını seç</option>'+DURAKLAR.map(n=>'<option'+(n==secili?' selected':'')+'>'+n+'</option>').join('');
+ try{
+  firebase.initializeApp(FBC);const db=firebase.firestore();
+  db.collection('plan').doc(bugun()).onSnapshot(d=>{const x=d.data()||{};PLAN={mim:x.mim?JSON.parse(x.mim):[],mur:x.mur?JSON.parse(x.mur):[]};planVar=!!(x.mim||x.mur);ciz()},()=>hata());
+  db.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v)}catch(e){}}haritaCiz()},()=>{});
+  db.collection('canli').onSnapshot(sn=>{CANLI={};sn.forEach(d=>{CANLI[d.id]=d.data()});ciz()},()=>{});
+ }catch(e){hata()}
+ setInterval(ciz,10000);
+}
+function hata(){document.getElementById('liste').innerHTML='<p class="bilgi">Bağlanılamadı. İnternet bağlantını kontrol et.</p>'}
+function durakSec(v){secili=v;try{history.replaceState(null,'','?durak='+encodeURIComponent(v))}catch(e){}ciz();haritaCiz()}
+function konumBul(){
+ if(!navigator.geolocation){alert('Telefonun konum vermiyor');return}
+ navigator.geolocation.getCurrentPosition(p=>{
+  const ben=[p.coords.latitude,p.coords.longitude];let en=null,em=1e12;
+  for(const n in KONUM){const m=mesafe(ben,KONUM[n]);if(m<em){em=m;en=n}}
+  if(!en){alert('Durak konumları henüz yüklenmedi');return}
+  document.getElementById('durak').value=en;durakSec(en);
+  if(em>1500)alert('En yakın durak '+en+', yaklaşık '+(em/1000).toFixed(1)+' km uzakta.');
+ },()=>alert('Konum izni verilmedi. Durağı listeden seçebilirsin.'),{enableHighAccuracy:true,timeout:15000});
+}
+function canliBilgi(plk,dep){
+ const c=CANLI[plk];if(!c||Date.now()-c.z>120000||c.dep!==dep)return null;return c;
+}
+function gelenler(hat){
+ const n=simdiSn(),L=[];
+ for(const [s,p,D] of PLAN[hat]||[]){
+  let dk=null;
+  if(secili==KALKIS[hat])dk=0;else{const f=D.find(x=>x[0]==secili);if(f)dk=f[1]}
+  if(dk===null)continue;
+  let t=s+dk*60,c=canliBilgi(p,s);
+  if(c&&c.gec!=null&&dk>0)t+=Math.max(-60,c.gec);
+  if(t<n-30)continue;
+  L.push({t:t,p:p,c:!!c,yolda:n>=s});
+ }
+ return L.sort((a,b)=>a.t-b.t).slice(0,3);
+}
+function ciz(){
+ const el=document.getElementById('liste');if(!el)return;
+ if(!secili){el.innerHTML='<p class="bilgi">Bulunduğun durağı seç ya da "En yakın durağı bul" tuşuna bas.</p>';return}
+ if(!planVar){el.innerHTML='<p class="bilgi">Bugünün sefer listesi henüz girilmedi.</p>';return}
+ const n=simdiSn();let h='',var_=false;
+ for(const hat of ['mim','mur']){
+  const L=gelenler(hat);if(!L.length)continue;var_=true;
+  h+='<div class="kart"><div class="hat">'+HATAD[hat]+'</div>';
+  for(const x of L){const k=Math.max(0,Math.round((x.t-n)/60));
+   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+'">'+(k==0?'Geliyor':k+' dk')+'</div></div>'}
+  h+='</div>';
+ }
+ el.innerHTML=var_?h:'<p class="bilgi">Bu durağa bugün başka minibüs gelmiyor.</p>';
+ haritaCanli();
+}
+function haritaCiz(){
+ const el=document.getElementById('harita');if(!el||!window.L)return;
+ if(!HAR){HAR=L.map(el).setView([41.02,28.59],13);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(HAR)}
+ if(secili&&KONUM[secili])HAR.setView(KONUM[secili],15);
+ haritaCanli();
+}
+function haritaCanli(){
+ if(!HAR)return;IM.forEach(m=>m.remove());IM=[];
+ if(secili&&KONUM[secili])IM.push(L.circleMarker(KONUM[secili],{radius:10,color:'#2f6fd6',fillOpacity:.8}).addTo(HAR).bindTooltip(secili,{permanent:true,direction:'top'}));
+ for(const p in CANLI){const c=CANLI[p];if(Date.now()-c.z>120000||c.lat==null)continue;
+  IM.push(L.marker([c.lat,c.lng],{icon:L.divIcon({html:'<div style="background:#e74c3c;color:#fff;font-weight:bold;border-radius:10px;padding:3px 7px;font-size:14px;white-space:nowrap">🚐 '+p+'</div>',className:'',iconAnchor:[30,12]})}).addTo(HAR))}
+}
+function qrSayfa(){
+ document.getElementById('ana').innerHTML='<h1>Durak QR kodları</h1><button onclick="print()">Yazdır</button><div id="qrlar"></div>';
+ const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+ s.onload=()=>{const k=document.getElementById('qrlar'),u=location.origin+location.pathname;
+  DURAKLAR.forEach(n=>{const d=document.createElement('div');d.className='qr';d.innerHTML='<h2>'+n+'</h2><div></div><p>Minibüs kaç dakikada gelir?<br>Telefonunun kamerasıyla okut</p>';k.appendChild(d);new QRCode(d.querySelector('div'),{text:u+'?durak='+encodeURIComponent(n),width:200,height:200})});
+  document.querySelectorAll('.qr img,.qr canvas').forEach(x=>x.style.margin='0 auto')};
+ document.head.appendChild(s);
+}
+</script>
+</body>
+</html>
