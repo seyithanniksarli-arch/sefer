@@ -40,8 +40,15 @@ button{border:0;background:#1fa36a;color:#fff;font-weight:bold;margin-top:8px}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-const DURAKLAR=['Fatih Market','Doğan Gıda','Makro Çarşı','Denizgören','Moroğlu','Balıkçı','Metrobüs','TÜYAP','Çekmece','Mimar Sinan','Meydan','Makro','Atrium','Muratçeşme','Göbek','Kiptaş','Akbelde','Hastane'];
-const KALKIS={mim:'Fatih Market',mur:'Muratçeşme'};
+const ANK={mim:{'Doğan Gıda':4,'Makro Çarşı':7,'Denizgören':12,'Moroğlu':16,'Balıkçı':18,'Metrobüs':30,'TÜYAP':35,'Çekmece':43,'Mimar Sinan':49,'Meydan':55,'Makro':60,'Atrium':65},mur:{'Göbek':3,'Kiptaş':5,'Akbelde':8,'Metrobüs':27,'TÜYAP':32,'Çekmece':40,'Hastane':45}};
+const KK={'Fatih Market':'Fatih Market','Atrium Çarşı':'Atrium','Anaokulu (Doğan Gıda)':'Doğan Gıda','Makro Çarşı':'Makro Çarşı','Mustafa Kemal Paşa Bulvarı (Meydan)':'Meydan','Denizgören':'Denizgören','Siteler (Moroğlu)':'Moroğlu','Mimar Sinan Belediye (Balıkçı)':'Balıkçı','Metrobüs':'Metrobüs','TÜYAP':'TÜYAP','Çekmece':'Çekmece','Balıkçılar (Mimar Sinan)':'Mimar Sinan','Muratçeşme':'Muratçeşme','Göbek (Pınar Sokak)':'Göbek','Mimar Sinan Kiptaş':'Kiptaş','Akbelde':'Akbelde','Mimar Sinan Devlet Hastanesi':'Hastane'};
+const YON={mim:{g:'TÜYAP yönü',d:'Atrium yönü'},mur:{g:'Metrobüs yönü',d:'Muratçeşme yönü'}};
+const HAT={mim:[['Fatih Market',0,'g'],['Güzelce Yol Ağzı',0.5,'g'],['Billur Caddesi',1,'g'],['Çarmıklı Caddesi',1.5,'g'],['Atrium Çarşı',2.5,'g'],['Anaokulu (Doğan Gıda)',4,'g'],['Villalar',4.5,'g'],['Sahil Tepe Villaları',5,'g'],['Sinanoba',6,'g'],['Makro Çarşı',7,'g'],['Mimar Sinan Konakları',8,'g'],['Mimaroba Muhtarlık',8.5,'g'],['Oba',9.5,'g'],['Dr. Sadık Ahmet İlkokulu',10.5,'g'],['Mustafa Kemal Paşa Bulvarı (Meydan)',12,'g'],['Denizgören',13,'g'],['Piri Reis Caddesi',14.5,'g'],['Siteler (Moroğlu)',16,'g'],['İnönü Caddesi',16,'g'],['Güzelsu',17,'g'],['Doç. Dr. Burhan Bahriyeli Lisesi',17.5,'g'],['Mimar Sinan Belediye (Balıkçı)',18,'g'],['Eczane',20,'g'],['Büyükçekmece Atirus',21,'g'],['Büyükçekmece İŞKUR',22,'g'],['Fatih Mahallesi',23,'g'],['Tabya 1',25,'g'],['Tabya 2',27,'g'],['Metrobüs',30,'g'],
+ ['TÜYAP',35,'d'],['Doğa Koleji',37,'d'],['Çekmece',43,'d'],['Eczane',45,'d'],['Mimar Sinan Karayolları',47,'d'],['Mimar Sinan Camii',48.5,'d'],['Balıkçılar (Mimar Sinan)',49,'d'],['Doç. Dr. Burhan Bahriyeli Lisesi',50.5,'d'],['Güzelsu',51.5,'d'],['İnönü Caddesi',52.5,'d'],['Siteler (Moroğlu)',53,'d'],['Piri Reis Caddesi',53.5,'d'],['Denizgören',55,'d'],['Mustafa Kemal Paşa Bulvarı (Meydan)',56,'d'],['Dr. Sadık Ahmet İlkokulu',57,'d'],['Oba',57.5,'d'],['Mimaroba Muhtarlık',58.5,'d'],['Mimar Sinan Konakları',59,'d'],['Makro Çarşı',60,'d'],['Sinanoba',61,'d'],['Sahil Tepe Villaları',62,'d'],['Villalar',62.5,'d'],['Anaokulu (Doğan Gıda)',63.5,'d'],['Atrium Çarşı',65,'d'],['Çarmıklı Caddesi',66,'d'],['Billur Caddesi',67,'d'],['Güzelce Yol Ağzı',68.5,'d']],
+mur:[['Muratçeşme',0,'g'],['Muratçeşme Sağlık Ocağı',1.5,'g'],['Hünkartepe Caddesi',2.5,'g'],['Göbek (Pınar Sokak)',3,'g'],['Yunus Emre Caddesi',4,'g'],['Mimar Sinan Kiptaş',5,'g'],['Dizdariye Caddesi',6.5,'g'],['Pir Sultan Sokak',7,'g'],['Akkent',7.5,'g'],['Akbelde',8,'g'],['Mimar Sinan Devlet Hastanesi',10,'g'],['Mimar Sinan Belediye (Balıkçı)',14,'g'],['Eczane',16,'g'],['Büyükçekmece Atirus',17,'g'],['Büyükçekmece İŞKUR',18,'g'],['Fatih Mahallesi',19,'g'],['Tabya 1',20.5,'g'],['Tabya 2',22.5,'g'],['Metrobüs',25,'g'],
+ ['TÜYAP',32,'d'],['Çekmece',40,'d'],['Eczane',42,'d'],['Akçimento',44,'d'],['Mimar Sinan Devlet Hastanesi',45,'d'],['Akbelde',47,'d'],['Akkent',47.5,'d'],['Pir Sultan Sokak',48,'d'],['Dizdariye Caddesi',48.5,'d'],['Mimar Sinan Kiptaş',50,'d'],['Yunus Emre Caddesi',51,'d'],['Göbek (Pınar Sokak)',52,'d'],['Hünkartepe Caddesi',52.5,'d'],['Muratçeşme Sağlık Ocağı',53.5,'d']]};
+const DURAKLAR=[];for(const b of ['mim','mur'])for(const x of HAT[b])if(!DURAKLAR.includes(x[0]))DURAKLAR.push(x[0]);
+const kk=n=>KK[n]||n;
 const HATAD={mim:'Mimarsinan hattı',mur:'Muratçeşme hattı'};
 const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
 const q=new URLSearchParams(location.search);
@@ -55,7 +62,7 @@ if(q.has('qr')){qrSayfa()}else{baslat()}
 
 function baslat(){
  const s=document.getElementById('durak');
- s.innerHTML='<option value="">Durağını seç</option>'+DURAKLAR.map(n=>'<option'+(n==secili?' selected':'')+'>'+n+'</option>').join('');
+ let o='<option value="">Durağını seç</option>';for(const b of ['mim','mur']){const g=[];HAT[b].forEach(x=>{if(!g.includes(x[0]))g.push(x[0])});o+='<optgroup label="'+HATAD[b]+'">'+g.map(n=>'<option value="'+n+'"'+(n==secili?' selected':'')+'>'+n+'</option>').join('')+'</optgroup>'}s.innerHTML=o;
  try{
   firebase.initializeApp(FBC);const db=firebase.firestore();
   db.collection('plan').doc(bugun()).onSnapshot(d=>{const x=d.data()||{};PLAN={mim:x.mim?JSON.parse(x.mim):[],mur:x.mur?JSON.parse(x.mur):[]};planVar=!!(x.mim||x.mur);ciz()},()=>hata());
@@ -70,7 +77,7 @@ function konumBul(){
  if(!navigator.geolocation){alert('Telefonun konum vermiyor');return}
  navigator.geolocation.getCurrentPosition(p=>{
   const ben=[p.coords.latitude,p.coords.longitude];let en=null,em=1e12;
-  for(const n in KONUM){const m=mesafe(ben,KONUM[n]);if(m<em){em=m;en=n}}
+  for(const n of DURAKLAR){const p=KONUM[kk(n)];if(!p)continue;const m=mesafe(ben,p);if(m<em){em=m;en=n}}
   if(!en){alert('Durak konumları henüz yüklenmedi');return}
   document.getElementById('durak').value=en;durakSec(en);
   if(em>1500)alert('En yakın durak '+en+', yaklaşık '+(em/1000).toFixed(1)+' km uzakta.');
@@ -79,16 +86,22 @@ function konumBul(){
 function canliBilgi(plk,dep){
  const c=CANLI[plk];if(!c||Date.now()-c.z>120000||c.dep!==dep)return null;return c;
 }
-function gelenler(hat){
- const n=simdiSn(),L=[];
+function varis(hat,s,D,n){
+ const A=[[0,0]];for(const [ad,dk] of D){const N=ANK[hat][ad];if(N!==undefined)A.push([N,dk])}
+ A.sort((a,b)=>a[0]-b[0]);let p=A[0],q=null;
+ for(const a of A){if(a[0]<=n)p=a;else{q=a;break}}
+ const dk=q?p[1]+(n-p[0])/(q[0]-p[0])*(q[1]-p[1]):p[1]+(n-p[0]);
+ return s+dk*60;
+}
+function gelenler(hat,yon){
+ const n=simdiSn(),L=[],E=HAT[hat].filter(x=>x[0]==secili&&x[2]==yon);if(!E.length)return [];
  for(const [s,p,D] of PLAN[hat]||[]){
-  let dk=null;
-  if(secili==KALKIS[hat])dk=0;else{const f=D.find(x=>x[0]==secili);if(f)dk=f[1]}
-  if(dk===null)continue;
-  let t=s+dk*60,c=canliBilgi(p,s);
-  if(c&&c.gec!=null&&dk>0)t+=Math.max(-60,c.gec);
-  if(t<n-30)continue;
-  L.push({t:t,p:p,c:!!c,yolda:n>=s});
+  for(const e of E){
+   let t=varis(hat,s,D,e[1]);const c=canliBilgi(p,s);
+   if(c&&c.gec!=null&&e[1]>0)t+=Math.max(-60,c.gec);
+   if(t<n-30)continue;
+   L.push({t:t,p:p,c:!!c,yolda:n>=s});
+  }
  }
  return L.sort((a,b)=>a.t-b.t).slice(0,3);
 }
@@ -97,9 +110,9 @@ function ciz(){
  if(!secili){el.innerHTML='<p class="bilgi">Bulunduğun durağı seç ya da "En yakın durağı bul" tuşuna bas.</p>';return}
  if(!planVar){el.innerHTML='<p class="bilgi">Bugünün sefer listesi henüz girilmedi.</p>';return}
  const n=simdiSn();let h='',var_=false;
- for(const hat of ['mim','mur']){
-  const L=gelenler(hat);if(!L.length)continue;var_=true;
-  h+='<div class="kart"><div class="hat">'+HATAD[hat]+'</div>';
+ for(const hat of ['mim','mur'])for(const yon of ['g','d']){
+  const L=gelenler(hat,yon);if(!L.length)continue;var_=true;
+  h+='<div class="kart"><div class="hat">'+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
   for(const x of L){const k=Math.max(0,Math.round((x.t-n)/60));
    h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+'">'+(k==0?'Geliyor':k+' dk')+'</div></div>'}
   h+='</div>';
@@ -109,13 +122,13 @@ function ciz(){
 }
 function haritaCiz(){
  const el=document.getElementById('harita');if(!el||!window.L)return;
- if(!HAR){HAR=L.map(el).setView([41.02,28.59],13);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}).addTo(HAR)}
- if(secili&&KONUM[secili])HAR.setView(KONUM[secili],15);
+ if(!HAR){HAR=L.map(el).setView([41.02,28.59],13);const k1=L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap'}),k2=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});k1.addTo(HAR);let hs=0;k1.on('tileerror',()=>{if(++hs==3){HAR.removeLayer(k1);k2.addTo(HAR)}});L.control.layers({'Harita':k1,'Harita 2':k2}).addTo(HAR)}
+ if(secili&&KONUM[kk(secili)])HAR.setView(KONUM[kk(secili)],15);
  haritaCanli();
 }
 function haritaCanli(){
  if(!HAR)return;IM.forEach(m=>m.remove());IM=[];
- if(secili&&KONUM[secili])IM.push(L.circleMarker(KONUM[secili],{radius:10,color:'#2f6fd6',fillOpacity:.8}).addTo(HAR).bindTooltip(secili,{permanent:true,direction:'top'}));
+ if(secili&&KONUM[kk(secili)])IM.push(L.circleMarker(KONUM[kk(secili)],{radius:10,color:'#2f6fd6',fillOpacity:.8}).addTo(HAR).bindTooltip(secili,{permanent:true,direction:'top'}));
  for(const p in CANLI){const c=CANLI[p];if(Date.now()-c.z>120000||c.lat==null)continue;
   IM.push(L.marker([c.lat,c.lng],{icon:L.divIcon({html:'<div style="background:#e74c3c;color:#fff;font-weight:bold;border-radius:10px;padding:3px 7px;font-size:14px;white-space:nowrap">🚐 '+p+'</div>',className:'',iconAnchor:[30,12]})}).addTo(HAR))}
 }
