@@ -121,7 +121,7 @@ function hesapla(){
  let ozet='<h3>Her aracın son seferi</h3><table><tr><th>Araç</th><th>Tür</th><th>Son sefer</th><th>Toplam</th></tr>';
  for(const c of canli){ozet+='<tr><td>'+c.p+'</td><td>'+ADLAR[c.k]+'</td><td>'+(sonCikis[c.p]!==undefined?fmt(sonCikis[c.p]):'-')+'</td><td>'+(say[c.p]||0)+'</td></tr>'}
  ozet+='</table>';
- sonuc.innerHTML=ozet+'<h3>Tüm seferler</h3><table><tr><th>Saat</th><th>Araç</th><th>Servis</th><th>Uyarı</th></tr>'+satirlar+'</table>';planYayinla();
+ sonuc.innerHTML=ozet+'<h3>Tüm seferler</h3><table><tr><th>Saat</th><th>Araç</th><th>Servis</th><th>Uyarı</th></tr>'+satirlar+'</table>';{let g=0;for(const q in PLAN)g+=PLAN[q].length;GSL[simdi]=g;GUNSEFER=(GSL.mim||0)+(GSL.mur||0)}planYayinla();
 }
 function excel(){
  const r=[];
@@ -305,7 +305,7 @@ function carpiPdf(){
  w.document.write('<html><head><meta charset="utf-8"><title>'+baslik+'</title><style>@page{size:A4 portrait;margin:10mm}body{font-family:Arial,sans-serif}h2{font-size:18px;margin:4px 0 10px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #444;padding:5px;text-align:left;vertical-align:top}th{background:#1fa36a;color:#fff}tr.uyari td{background:#fbebeb}td:first-child{font-weight:bold;font-size:14px}p{font-weight:bold;margin-top:10px}</style></head><body><h2>'+baslik+'</h2>'+tb.outerHTML+[...document.querySelectorAll('#carpi h3,#carpi p')].map(x=>x.outerHTML).join('')+'</body></html>');
  w.document.close();w.focus();setTimeout(()=>w.print(),400);
 }
-let PLAN={},takipT=null,uyarildi={},ctx=null;
+var GSL={},GUNSEFER=0;let PLAN={},takipT=null,uyarildi={},ctx=null;
 let AKT=null,GEC=null,GECZ=0,CG=0,OTO=false;
 function otoTakip(){if(OTO||takipT)return;try{const p=localStorage.getItem('benim'),h=localStorage.getItem('benimHat');if(!p)return;if(h&&h!==simdi&&durum[h]&&(durum[h].plakalar||'').split(/[\s,;]+/).includes(p)){OTO=true;sekme(h);OTO=false}if(!PLAN[p])return;OTO=true;const d=document.querySelector('details[data-k=takip]');if(d)d.open=true;document.getElementById('benim').value=p;takip();OTO=false}catch(e){OTO=false}}
 document.addEventListener('pointerdown',()=>{try{if(ctx)ctx.resume();if(navigator.wakeLock&&takipT)navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}});const PY={};
@@ -332,7 +332,7 @@ function aktifGoster(p,s,el){
  if(e>=0){const h=D.find(x=>x[1]*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
  const a=Math.abs(e),sw=(e<0?'-':'')+String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');
  const k=hedef-s;
- el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?trafikSatir(ad,k):'');
+ el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?trafikSatir(ad,k,dep,D,B):'');
  if(e===0)bip(1500,0.8);
  return true;
 }
@@ -515,22 +515,26 @@ function imleriCiz(){if(!HARITA)return;IMLER.forEach(m=>m.remove());IMLER=[];for
 function haritaKur(){if(HARITA){HARITA.remove();HARITA=null}const el=document.getElementById('harita');if(!el)return;if(!window.L){el.textContent='Harita yüklenemedi, internet var mı?';return}HARITA=L.map(el).setView([41.02,28.59],13);const kat={'Harita':L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap'}),'Harita 2':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}),'Uydu':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})};kat['Harita'].addTo(HARITA);L.control.layers(kat).addTo(HARITA);HARITA.on('click',ev=>{if(!ADMIN)return;const n=document.getElementById('durakSec').value;if(!confirm(n+' buraya kaydedilsin mi?'))return;KONUM[n]=[ev.latlng.lat,ev.latlng.lng];durakKaydet();imleriCiz()});imleriCiz()}
 function durakSil(){const n=document.getElementById('durakSec').value;if(!KONUM[n])return;if(!confirm(n+' işareti silinsin mi?'))return;delete KONUM[n];durakKaydet();imleriCiz()}
 function durakKaydet(){if(FB)FB.collection('ayar').doc('duraklar').set({v:JSON.stringify(KONUM),z:Date.now()}).catch(e=>alert('Durak kaydedilemedi: '+e.code))}
-var TT_KEY=localStorage.getItem('ttkey')||'',TT={ad:null,sn:null,z:0,yuk:false};
+var TT_KEY=localStorage.getItem('ttkey')||'',TT={dep:null,z:0,v:null,yuk:false,hata:'',dene:0},GUNLUK=580;
 function ttKaydet(){const v=document.getElementById('ttKey').value.trim();TT_KEY=v;localStorage.setItem('ttkey',v);if(FB)FB.collection('ayar').doc('tomtom').set({k:v,z:Date.now()}).then(()=>alert('Anahtar kaydedildi, bütün cihazlar kullanacak')).catch(e=>alert('Kaydedilemedi: '+e.code));else alert('Bu cihaza kaydedildi')}
 function dkYaz(sn){return Math.max(0,Math.round(sn/60))+' dk'}
-function trafikSorgu(ad){if(TT.yuk)return;const n=Date.now();if(TT.ad===ad&&(TT.sn!=null||n-TT.z<60000))return;TT.yuk=true;const A=BENKONUM,B=KONUM[ad];
- fetch('https://api.tomtom.com/routing/1/calculateRoute/'+A[0]+','+A[1]+':'+B[0]+','+B[1]+'/json?traffic=true&key='+encodeURIComponent(TT_KEY)).then(r=>r.json()).then(j=>{const s=j&&j.routes&&j.routes[0]&&j.routes[0].summary;TT={ad:ad,sn:s?s.travelTimeInSeconds:null,z:Date.now(),yuk:false,hata:s?'':(j&&j.detailedError&&j.detailedError.message)||'Yanıt yok'}}).catch(()=>{TT={ad:ad,sn:null,z:Date.now(),yuk:false,hata:'İnternet yok'}})}
-function trafikSatir(ad,k){
+function trafikAralik(D){const T=D[D.length-1][1]*60,Q=GUNSEFER>0?Math.min(40,Math.max(1,Math.floor(GUNLUK/GUNSEFER))):3;return Math.max(60,T/Q)}
+function trafikSorgu(dep,D,ad){if(TT.yuk)return;const n=Date.now();if(TT.dep===dep&&n-TT.dene<trafikAralik(D)*1000)return;const i=Math.max(0,D.findIndex(x=>x[0]===ad)),L=D.slice(i).filter(x=>KONUM[x[0]]);if(!L.length)return;if(TT.dep!==dep)TT={dep:dep,z:0,v:null,yuk:false,hata:'',dene:0};TT.yuk=true;TT.dene=n;const A=BENKONUM;
+ fetch('https://api.tomtom.com/routing/1/calculateRoute/'+A[0]+','+A[1]+L.map(x=>':'+KONUM[x[0]][0]+','+KONUM[x[0]][1]).join('')+'/json?traffic=true&key='+encodeURIComponent(TT_KEY)).then(r=>r.json()).then(j=>{const g=j&&j.routes&&j.routes[0]&&j.routes[0].legs;if(g&&g.length){let c=0;const v={};g.forEach((x,m)=>{c+=x.summary.travelTimeInSeconds;if(L[m])v[L[m][0]]=c});TT.v=v;TT.z=Date.now();TT.hata=''}else TT.hata=(j&&j.detailedError&&j.detailedError.message)||'Yanıt yok';TT.yuk=false}).catch(()=>{TT.hata='İnternet yok';TT.yuk=false})}
+function trafikEk(ad,dep,D,B,st){
+ const L=B=='mim'?['Metrobüs','TÜYAP']:(B=='mur'&&D.length?[D[D.length-1][0]]:[]),n=new Date(),ns=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();let h='';
+ L.forEach(a=>{const d=D.find(x=>x[0]===a);if(!d||a===ad||TT.v[a]===undefined)return;const kt=Math.max(0,TT.v[a]-Math.floor((Date.now()-TT.z)/1000)),f=kt-(dep+d[1]*60-ns);h+='<div style="'+st+'font-size:20px;font-weight:bold;color:'+(f<=0?'#1fa36a':(f<=120?'#f1c40f':'#e74c3c'))+'">'+a+' · varış '+dkYaz(kt)+'</div>'});
+ return h}
+function trafikSatir(ad,k,dep,D,B){
  const st='text-align:center;margin:6px 0;';
  if(!TT_KEY)return '';
  if(!KONUM[ad])return '<p class="kucuk" style="'+st+'">'+ad+' haritada işaretli değil, trafik gösterilemiyor</p>';
  if(!BENKONUM)return '<p class="kucuk" style="'+st+'">Konum bekleniyor... (konum iznini aç)</p>';
- trafikSorgu(ad);
- if(TT.ad!==ad||(TT.sn==null&&!TT.hata))return '<p class="kucuk" style="'+st+'">Trafik hesaplanıyor...</p>';
- if(TT.sn==null)return '<p class="kucuk" style="'+st+'">Trafik alınamadı: '+TT.hata+'</p>';
- const kalanTr=Math.max(0,TT.sn-Math.floor((Date.now()-TT.z)/1000));
+ trafikSorgu(dep,D,ad);
+ if(TT.dep!==dep||!TT.v||TT.v[ad]===undefined){if(TT.hata&&!TT.yuk&&TT.dep===dep&&!TT.v)return '<p class="kucuk" style="'+st+'">Trafik alınamadı: '+TT.hata+'</p>';return '<p class="kucuk" style="'+st+'">Trafik hesaplanıyor...</p>'}
+ const kalanTr=Math.max(0,TT.v[ad]-Math.floor((Date.now()-TT.z)/1000));
  const fark=kalanTr-k;GEC=fark;GECZ=Date.now();const r=fark<=0?'#1fa36a':(fark<=120?'#f1c40f':'#e74c3c');
- return '<div style="'+st+'font-size:26px;font-weight:bold;color:'+r+'">Varış '+dkYaz(kalanTr)+'</div>';
+ return '<div style="'+st+'font-size:26px;font-weight:bold;color:'+r+'">Varış '+dkYaz(kalanTr)+'</div>'+trafikEk(ad,dep,D,B,st)+'<p class="kucuk" style="'+st+'color:#888">Trafik '+Math.round(trafikAralik(D)/60)+" dk'da bir güncelleniyor</p>";
 }
 if(FB)FB.collection('ayar').doc('admin').onSnapshot(d=>{const x=d.data();if(x&&x.h){SIFRE_H=x.h;adminKontrol()}},e=>{});
 if(FB)FB.collection('ayar').doc('tomtom').onSnapshot(d=>{const x=d.data();if(x&&x.k){TT_KEY=x.k;localStorage.setItem('ttkey',x.k);const i=document.getElementById('ttKey');if(i&&!i.value)i.value=x.k}},e=>{});

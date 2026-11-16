@@ -35,6 +35,7 @@ button{border:0;background:var(--lac);color:#fff;font-weight:800;margin-top:10px
 .plk{font-size:24px;font-weight:900}
 .dk{font-size:34px;font-weight:900;color:var(--yesil);min-width:110px;text-align:right;letter-spacing:-.5px}
 .dk.yakin{color:#e67e22}
+.dk.durakta{color:#0f8a57}
 .kucuk{font-size:14px;color:var(--gri);margin-top:2px}
 .canli{display:inline-block;background:#e74c3c;color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;animation:nabiz 1.6s infinite}
 @keyframes nabiz{50%{opacity:.55}}
@@ -134,8 +135,8 @@ function ciz(){
  for(const hat of ['mim','mur'])for(const yon of ['g','d']){
   const L=gelenler(hat,yon);if(!L.length)continue;var_=true;
   h+='<div class="kart"><div class="hat '+hat+'">● '+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
-  for(const x of L){const k=Math.max(0,Math.round((x.t-n)/60));
-   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+'">'+(k==0?'Geliyor':k+' dk')+'</div></div>'}
+  for(const x of L){const d=x.t-n,k=d>60?Math.ceil(d/60):0;
+   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+(d<=0?' durakta':'')+'">'+(d>60?k+' dk':d>0?'Geliyor':'Durakta')+'</div></div>'}
   h+='</div>';
  }
  el.innerHTML=var_?h:'<p class="bilgi">Bu durağa bugün başka minibüs gelmiyor.</p>';
