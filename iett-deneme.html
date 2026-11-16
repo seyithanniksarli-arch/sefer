@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İETT Servis Denemesi</title>
+<style>
+  :root{--bg:#fff;--fg:#111;--mut:#555;--card:#f2f4f7;--bd:#c9ced6;--ok:#0a7d33;--err:#b3261e;--btn:#0b57d0}
+  @media (prefers-color-scheme:dark){:root{--bg:#121316;--fg:#f1f1f1;--mut:#a9adb5;--card:#1c1e23;--bd:#3a3d45;--ok:#5fd68a;--err:#ff8a80;--btn:#7aa7ff}}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:18px/1.45 system-ui,sans-serif}
+  h1{font-size:24px;margin:0 0 12px}
+  h2{font-size:20px;margin:0 0 8px}
+  label{display:block;font-weight:600;margin-bottom:6px}
+  input{width:100%;font-size:22px;padding:12px;border:2px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg)}
+  .row{display:flex;gap:10px;margin:12px 0}
+  button{flex:1;font-size:20px;padding:14px;border:0;border-radius:10px;background:var(--btn);color:#fff;font-weight:700}
+  button.sec{background:var(--card);color:var(--fg);border:2px solid var(--bd)}
+  button:disabled{opacity:.5}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:12px 0}
+  pre{white-space:pre-wrap;word-break:break-all;font:14px/1.4 ui-monospace,monospace;margin:6px 0;background:var(--bg);padding:8px;border-radius:8px;border:1px solid var(--bd)}
+  .ok{color:var(--ok);font-weight:700}.err{color:var(--err);font-weight:700}.mut{color:var(--mut);font-size:15px}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border:1px solid var(--bd);padding:4px 6px;text-align:left}
+  .tw{overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>İETT Servis Denemesi</h1>
+<p class="mut">Amaç: Bu telefon tarayıcısından İETT SOAP servisi doğrudan çağrılabiliyor mu?</p>
+<label for="hat">Hat No</label>
+<input id="hat" value="448" inputmode="text" autocomplete="off">
+<div class="row">
+  <button id="go">Dene</button>
+  <button id="cp" class="sec">Sonucu kopyala</button>
+</div>
+<div id="st" class="mut"></div>
+<div id="out"></div>
+
+<script>
+var URL_BASE = "https://api.ibb.gov.tr/iett/FiloDurum/SeferGerceklesme.asmx";
+var NS = "http://tempuri.org/";
+var METHOD = "GetHatOtoKonum_json";
+
+function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");}
+function xmlUnesc(s){return String(s).replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#x([0-9a-fA-F]+);/g,function(_,h){return String.fromCodePoint(parseInt(h,16));}).replace(/&#(\d+);/g,function(_,d){return String.fromCodePoint(+d);}).replace(/&amp;/g,"&");}
+function soap11(hat){
+  return '<?xml version="1.0" encoding="utf-8"?>\n<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><'+METHOD+' xmlns="'+NS+'"><HatNo>'+xmlEsc(hat)+'</HatNo></'+METHOD+'></soap:Body></soap:Envelope>';
+}
+function soap12(hat){
+  return '<?xml version="1.0" encoding="utf-8"?>\n<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><'+METHOD+' xmlns="'+NS+'"><HatNo>'+xmlEsc(hat)+'</HatNo></'+METHOD+'></soap12:Body></soap12:Envelope>';
+}
+function buildAttempts(hat){
+  var u = URL_BASE + "/" + METHOD;
+  return [
+    {t:"SOAP 1.1 POST", method:"POST", url:URL_BASE, headers:{"Content-Type":"text/xml; charset=utf-8","SOAPAction":NS+METHOD}, body:soap11(hat)},
+    {t:"SOAP 1.2 POST", method:"POST", url:URL_BASE, headers:{"Content-Type":'application/soap+xml; charset=utf-8; action="'+NS+METHOD+'"'}, body:soap12(hat)},
+    {t:"HTTP POST form", method:"POST", url:u, headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:"HatNo="+encodeURIComponent(hat)},
+    {t:"HTTP POST JSON", method:"POST", url:u, headers:{"Content-Type":"application/json"}, body:JSON.stringify({HatNo:String(hat)})},
+    {t:"HTTP GET (özgün adres)", method:"GET", url:u+"?HatNo="+encodeURIComponent(hat), headers:{}, body:null}
+  ];
+}
+// Yanıt metninden araç dizisini çıkarır (SOAP içindeki JSON string ya da düz JSON).
+function extractVehicles(text){
+  var cands = [], m, re = /<GetHatOtoKonum_jsonResult[^>]*>([\s\S]*?)<\/GetHatOtoKonum_jsonResult>/i;
+  if((m = re.exec(text))) cands.push(xmlUnesc(m[1]));
+  var m2 = /<string[^>]*>([\s\S]*?)<\/string>/i.exec(text);
+  if(m2) cands.push(xmlUnesc(m2[1]));
+  cands.push(text);
+  for(var i=0;i<cands.length;i++){
+    var c = cands[i].trim();
+    if(!c || (c[0]!=="[" && c[0]!=="{" && c[0]!=='"')) continue;
+    try{
+      var v = JSON.parse(c);
+      if(typeof v==="string"){ try{v=JSON.parse(v);}catch(e){} }
+      if(v && !Array.isArray(v)){
+        var k = Object.keys(v).filter(function(k){return Array.isArray(v[k]);})[0];
+        v = k ? v[k] : [v];
+      }
+      if(Array.isArray(v)) return v;
+    }catch(e){}
+  }
+  return null;
+}
+function pick(o,names){
+  var keys = Object.keys(o);
+  for(var i=0;i<names.length;i++){
+    for(var j=0;j<keys.length;j++){ if(keys[j].toLowerCase()===names[i].toLowerCase() && o[keys[j]]!=null) return o[keys[j]]; }
+  }
+  return "";
+}
+function vehicleRows(arr){
+  return arr.map(function(o){return [
+    pick(o,["kapino","kapi_no","plaka","plate","aracKapiNo"]),
+    pick(o,["enlem","lat","latitude"]),
+    pick(o,["boylam","lng","lon","longitude"]),
+    pick(o,["hiz","speed"]),
+    pick(o,["yakinDurakKodu","yakin_durak_kodu"])
+  ];});
+}
+
+// ---- Arayüz ----
+var $ = function(id){return document.getElementById(id);};
+var log = "";
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+function add(html, text){ var d=document.createElement("div"); d.className="card"; d.innerHTML=html; $("out").appendChild(d); log += text+"\n\n"; }
+
+async function run(a, n){
+  var req = a.method+" "+a.url+"\n"+Object.keys(a.headers).map(function(k){return k+": "+a.headers[k];}).join("\n")+(a.body?"\n\n"+a.body:"");
+  var h = '<h2>'+n+'. '+esc(a.t)+'</h2><div class="mut">İstek</div><pre>'+esc(req)+'</pre>';
+  var t = "### "+n+". "+a.t+"\nİSTEK:\n"+req+"\n";
+  var ctl = new AbortController(), timer = setTimeout(function(){ctl.abort();},15000);
+  try{
+    var opt = {method:a.method, headers:a.headers, signal:ctl.signal};
+    if(a.body) opt.body = a.body;
+    var r = await fetch(a.url, opt);
+    var txt = await r.text();
+    clearTimeout(timer);
+    var head = txt.slice(0,1500);
+    h += '<div class="ok">HTTP '+r.status+' '+esc(r.statusText)+'</div><pre>'+esc(head)+(txt.length>1500?"\n… (toplam "+txt.length+" karakter)":"")+'</pre>';
+    t += "DURUM: HTTP "+r.status+" "+r.statusText+"\nYANIT (ilk 1500):\n"+head+"\n";
+    var veh = extractVehicles(txt);
+    if(veh && veh.length){
+      var rows = vehicleRows(veh).slice(0,50);
+      h += '<div class="ok">Araç sayısı: '+veh.length+'</div><div class="tw"><table><tr><th>Plaka/Kapı</th><th>Enlem</th><th>Boylam</th><th>Hız</th><th>Yakın durak</th></tr>'+
+        rows.map(function(r){return "<tr>"+r.map(function(c){return "<td>"+esc(c)+"</td>";}).join("")+"</tr>";}).join("")+'</table></div>';
+      t += "ARAÇ SAYISI: "+veh.length+"\n"+rows.map(function(r){return r.join(" | ");}).join("\n")+"\n";
+    }
+  }catch(e){
+    clearTimeout(timer);
+    h += '<div class="err">HATA: '+esc(e.name)+': '+esc(e.message)+'</div>';
+    if(/failed to fetch|networkerror|load failed/i.test(e.message)) h += '<div class="mut">"Failed to fetch" büyük olasılıkla sunucunun tarayıcı çağrılarını engellediği (CORS) ya da bağlantı olmadığı anlamına gelir.</div>';
+    if(e.name==="AbortError") h += '<div class="mut">15 saniyede yanıt gelmedi (zaman aşımı).</div>';
+    t += "HATA: "+e.name+": "+e.message+"\n";
+  }
+  add(h, t);
+}
+
+async function main(){
+  var hat = $("hat").value.trim() || "448";
+  $("go").disabled = true; $("out").innerHTML = ""; log = "";
+  var at = buildAttempts(hat);
+  for(var i=0;i<at.length;i++){
+    $("st").textContent = "Deneme "+(i+1)+"/"+at.length+" çalışıyor…";
+    await run(at[i], i+1);
+  }
+  $("st").textContent = "Bitti. Sonucu kopyalayıp sohbete yapıştırabilirsin.";
+  $("go").disabled = false;
+}
+async function copyAll(){
+  var text = "İETT deneme, hat "+$("hat").value+"\n"+navigator.userAgent+"\n\n"+log;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    var ta = document.createElement("textarea"); ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=false; try{ok=document.execCommand("copy");}catch(e2){}
+    document.body.removeChild(ta);
+    $("st").textContent = ok ? "Kopyalandı." : "Kopyalanamadı; metni elle seçin.";
+    return;
+  }
+  $("st").textContent = "Kopyalandı.";
+}
+$("go").addEventListener("click", main);
+$("cp").addEventListener("click", copyAll);
+</script>
+</body>
+</html>
