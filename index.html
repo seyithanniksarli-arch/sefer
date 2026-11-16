@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sefer Sırası</title>
 <link rel="icon" type="image/svg+xml" href="sofor-ikon.svg"><link rel="apple-touch-icon" href="sofor-ikon.png"><meta name="apple-mobile-web-app-title" content="Sefer Sırası"><meta name="theme-color" content="#0f8a57">
+<link rel="manifest" href="manifest-sofor.json">
 <style>
 :root{--yesil:#1fa36a;--koyu:#0f8a57;--lac:#10202e;--mavi:#16507e;--sari:#ffcf33;--zemin:#eef2f5;--gri:#5b6b7a}
 body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--lac);font-size:18px}
@@ -89,5 +90,6 @@ button[style*="#8e44ad"]{background:var(--lac)!important}
 <script src="iett.js"></script>
 <script src="trafik.js"></script>
 <script src="ogren.js"></script>
+<script>try{if('serviceWorker' in navigator){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}})}}catch(e){}</script>
 </body>
 </html>

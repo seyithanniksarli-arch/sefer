@@ -1,0 +1,39 @@
+{
+  "name": "BL-105 Minibüs Nerede?",
+  "short_name": "Minibüs Nerede",
+  "description": "BL-105 minibüsü canlı takip",
+  "lang": "tr",
+  "id": "./yolcu.html",
+  "start_url": "./yolcu.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f8a57",
+  "background_color": "#eef2f5",
+  "icons": [
+    {
+      "src": "icon-yolcu-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-yolcu-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-yolcu-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-yolcu-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

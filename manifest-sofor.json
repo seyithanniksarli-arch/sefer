@@ -1,0 +1,39 @@
+{
+  "name": "BL-105 Sefer Sırası",
+  "short_name": "Sefer Sırası",
+  "description": "BL-105 şoför sefer sırası paneli",
+  "lang": "tr",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f8a57",
+  "background_color": "#eef2f5",
+  "icons": [
+    {
+      "src": "icon-sofor-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-sofor-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-sofor-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-sofor-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
