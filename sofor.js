@@ -333,7 +333,7 @@ function aktifGoster(p,s,el){
  if(e>=0){const h=D.find(x=>x[1]*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
  const a=Math.abs(e),sw=(e<0?'-':'')+String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');
  const k=hedef-s;
- el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?(typeof trafikSatir==='function'?trafikSatir(ad,k,dep,D,B):'')+(typeof ietSatir==='function'?ietSatir():''):'')+(typeof saatYazi==='function'?saatYazi():'');
+ el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?(typeof trafikSatir==='function'?trafikSatir(ad,k,dep,D,B):'')+(typeof ietSatir==='function'?ietSatir(D,D.findIndex(x=>x[0]===ad)):''):'')+(typeof saatYazi==='function'?saatYazi():'');
  if(e===0)bip(1500,0.8);
  return true;
 }

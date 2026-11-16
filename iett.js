@@ -1,13 +1,35 @@
 // iett.js – İETT 448 canlı otobüs satırı (sofor.js'den sonra yüklenir)
-var IETT_URL=localStorage.getItem('iettUrl')||'',IETT={z:0,v:null,yuk:false,dene:0,hata:''},IETT_HIZ=22;
+var IETT_URL=localStorage.getItem('iettUrl')||'',IETT={z:0,v:null,yuk:false,dene:0,hata:'',stale:false,pas:{},tab:{},gon:{}},IETT_HIZ=22,IETT_YAR=150;
 function iettKaydet(){const v=document.getElementById('iettUrl').value.trim().replace(/\/+$/,'');IETT_URL=v;localStorage.setItem('iettUrl',v);if(FB)FB.collection('ayar').doc('iett').set({u:v,z:Date.now()}).then(()=>alert('Adres kaydedildi, bütün cihazlar kullanacak')).catch(e=>alert('Kaydedilemedi: '+e.code));else alert('Bu cihaza kaydedildi')}
-function ietEnrich(){try{if(!IETT_URL||IETT.yuk)return;const n=Date.now();if(n-IETT.dene<60000)return;IETT.yuk=true;IETT.dene=n;fetch(IETT_URL+'/?hat=448',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).then(j=>{if(j&&j.ok&&Array.isArray(j.araclar)){IETT.v=j.araclar;IETT.z=j.z||Date.now();IETT.hata=''}else IETT.hata='Yanıt yok';IETT.yuk=false}).catch(()=>{IETT.hata='İnternet yok';IETT.yuk=false})}catch(e){IETT.yuk=false}}
-function ietYakin(v,d,bati,now){const o=[];(v||[]).forEach(b=>{const la=parseFloat(b.enlem),ln=parseFloat(b.boylam);if(isNaN(la)||isNaN(ln))return;const y=String(b.yon).toLocaleUpperCase('tr');if(!y.includes(bati?'GÜZELCE':'HARAM'))return;if(bati?ln<d[1]-0.0003:ln>d[1]+0.0003)return;const t=new Date(String(b.son_konum_zamani).replace(' ','T')).getTime();if(!isNaN(t)&&now-t>300000)return;const km=mesafe([la,ln],d)/1000;o.push({k:b.kapino,km:km,dk:Math.max(1,Math.round(km*1.3/IETT_HIZ*60))})});return o.sort((a,b)=>a.km-b.km).slice(0,2)}
-function ietSatir(){
+function ietEnrich(){try{if(!IETT_URL||IETT.yuk)return;const n=Date.now();if(n-IETT.dene<60000)return;IETT.yuk=true;IETT.dene=n;fetch(IETT_URL+'/?hat=448',{signal:AbortSignal.timeout(15000)}).then(r=>r.json()).then(j=>{if(j&&j.ok&&Array.isArray(j.araclar)){IETT.v=j.araclar;IETT.z=j.z>1e12?j.z:Date.now();IETT.stale=j.stale===true;IETT.hata='';try{ietGecis(j.araclar,Date.now())}catch(e){}}else IETT.hata='Yanıt yok';IETT.yuk=false}).catch(()=>{IETT.hata='İnternet yok';IETT.yuk=false})}catch(e){IETT.yuk=false}}
+function ietYakin(v,d,bati,now){const o=[];(v||[]).forEach(b=>{const la=parseFloat(b.enlem),ln=parseFloat(b.boylam);if(isNaN(la)||isNaN(ln))return;const y=String(b.yon).toLocaleUpperCase('tr');if(!y.includes(bati?'GÜZELCE':'HARAM'))return;if(bati?ln<d[1]-0.0003:ln>d[1]+0.0003)return;const t=new Date(String(b.son_konum_zamani).replace(' ','T')).getTime();if(!isNaN(t)&&now-t>300000)return;const km=mesafe([la,ln],d)/1000;o.push({k:b.kapino,km:km,la:la,ln:ln,dk:Math.max(1,Math.round(km*1.3/IETT_HIZ*60))})});return o.sort((a,b)=>a.km-b.km).slice(0,2)}
+// ---- öğrenen süre: geçiş algılama, Firestore 'iettSure', medyan tablo ----
+function ietGun(ms){const d=new Date(ms).getDay();return d===0?'paz':d===6?'cmt':'hi'}
+function ietZ(b){return new Date(String(b.son_konum_zamani).replace(' ','T')).getTime()}
+function ietSira(bati){const a=[];for(const n in KONUM){const p=KONUM[n];if(p&&p.length>1&&!isNaN(p[0])&&!isNaN(p[1]))a.push(n)}a.sort((x,y)=>KONUM[x][1]-KONUM[y][1]);return bati?a.reverse():a}
+function ietId(a,b,bati){return (a+'__'+b+'_'+(bati?'b':'d')).replace(/\//g,'-')}
+function ietMed(a){a=a.slice().sort((x,y)=>x-y);const n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2}
+function ietSeg(id,now){const o=IETT.tab[id];if(!o||!o.length)return null;const g=ietGun(now);let L=o.filter(x=>x.g===g&&x.s>0);if(L.length<3)L=o.filter(x=>x.s>0);return L.length<3?null:ietMed(L.map(x=>x.s))}
+function ietYaz(id,s){try{if(!FB)return;const kk=id+'|'+s.k+'|'+s.z;if(IETT.gon[kk])return;IETT.gon[kk]=1;const o=IETT.tab[id];if(o&&o.some(x=>x.k===s.k&&x.z===s.z))return;const r=FB.collection('iettSure').doc(id);FB.runTransaction(tx=>tx.get(r).then(d=>{let a=(d.exists&&d.data().o)||[];if(a.some(x=>x.k===s.k&&x.z===s.z))return;a=a.concat([s]).sort((x,y)=>x.z-y.z).slice(-30);tx.set(r,{o:a})})).catch(()=>{})}catch(e){}}
+function ietPar(k,n,e,bati){const S=ietSira(bati),i=S.indexOf(n);if(i<1)return;const q=IETT.pas[k][S[i-1]];if(!q||!q.f||q.y!==bati)return;const f=e.z-q.z,s=Math.round(f/1000);if(f<=0||f>1200000||s<20||s>900)return;e.s=1;ietYaz(ietId(S[i-1],n,bati),{s:s,k:k,z:e.z,g:ietGun(e.z)})}
+function ietGecis(v,now){const P=IETT.pas;(v||[]).forEach(b=>{const la=parseFloat(b.enlem),ln=parseFloat(b.boylam),t=ietZ(b),k=b.kapino;if(isNaN(la)||isNaN(ln)||isNaN(t)||!k)return;const y=String(b.yon).toLocaleUpperCase('tr'),bati=y.includes('GÜZELCE');if(!bati&&!y.includes('HARAM'))return;const pk=P[k]||(P[k]={});
+ for(const n in KONUM){const p=KONUM[n];if(!p||isNaN(p[0]))continue;const m=mesafe([la,ln],p),e=pk[n];
+  if(m<=IETT_YAR){if(!e||e.y!==bati||t-e.z>600000)pk[n]={z:t,m:m,y:bati,f:0,s:0};else if(!e.s&&m<e.m){e.z=t;e.m=m;e.f=0}}
+  else if(e&&!e.f&&t>e.z){e.f=1;ietPar(k,n,e,bati)}}
+ for(const n in pk)if(now-pk[n].z>1800000)delete pk[n]})}
+function ietEta(b,hd,bati,now){const S=ietSira(bati),ti=S.indexOf(hd),yedek=Math.max(1,Math.round(b.km*1.3/IETT_HIZ*60));if(ti<0)return yedek;
+ const ni=S.findIndex(n=>bati?KONUM[n][1]<=b.ln:KONUM[n][1]>=b.ln);if(ni<1||ni>ti)return yedek;
+ const A=KONUM[S[ni-1]][1],B=KONUM[S[ni]][1];let r=B===A?0:(b.ln-A)/(B-A);r=Math.min(1,Math.max(0,r));let sn=0,bil=0;
+ for(let j=ni;j<=ti;j++){const a=S[j-1],c=S[j];let m=ietSeg(ietId(a,c,bati),now);if(m===null)m=mesafe(KONUM[a],KONUM[c])/1000*1.3/IETT_HIZ*3600;else bil=1;sn+=(j===ni?1-r:1)*m}
+ return bil?Math.max(1,Math.round(sn/60)):yedek}
+function ietBati(D,j){const ln=n=>KONUM[n]?KONUM[n][1]:NaN,c=ln(D[j][0]);if(isNaN(c))return null;for(let q=j-1;q>=0;q--){const p=ln(D[q][0]);if(!isNaN(p))return c===p?null:c<p}for(let q=j+1;q<D.length;q++){const p=ln(D[q][0]);if(!isNaN(p))return c===p?null:c>p}return null}
+function ietDur(D,i,now,st){let h='';if(!D||!(i>=0))return h;for(let j=i+1;j<=i+2&&j<D.length;j++){const n=D[j][0],p=KONUM[n];if(!p)continue;const bati=ietBati(D,j);if(bati===null)continue;const L=ietYakin(IETT.v,p,bati,now);L.forEach(x=>{x.dk=ietEta(x,n,bati,now)});h+='<div style="'+st+'font-size:18px"><b>'+n+' → 448</b> '+(L.length?L.map(x=>x.k+' ~'+x.dk+' dk').join(' · '):'yaklaşan yok')+'</div>'}return h}
+function ietSatir(D,i){
  if(!IETT_URL)return '';ietEnrich();
  const st='text-align:center;margin:6px 0;';
  if(!IETT.v)return IETT.hata?'<p class="kucuk" style="'+st+'color:#888">İETT alınamadı</p>':'';
- const now=Date.now();let h='';
- [['448 Haramidere yönü → Fatih Mah.',KONUM['Fatih Mahallesi']||KONUM['Fatih Market'],0],['448 Güzelce yönü → TÜYAP',KONUM['TÜYAP'],1]].forEach(r=>{if(!r[1])return;const L=ietYakin(IETT.v,r[1],r[2],now);h+='<div style="'+st+'font-size:18px"><b>'+r[0]+'</b>'+(L.length?L.map(x=>'<div>'+x.k+' · '+x.km.toFixed(1).replace('.',',')+' km · ~'+x.dk+' dk</div>').join(''):'<div>yaklaşan otobüs yok</div>')+'</div>'});
- return h?h+'<p class="kucuk" style="'+st+'color:#888;font-size:12px">İETT canlı · '+new Date(IETT.z).toTimeString().slice(0,8)+'</p>':''}
+ const now=Date.now();let h='';try{h=ietDur(D,i,now,st)}catch(e){h=''}
+ const yas=Math.max(0,Math.round((now-IETT.z)/1000));
+ return h?h+'<p class="kucuk" style="'+st+'color:#888;font-size:12px">İETT canlı · '+new Date(IETT.z).toTimeString().slice(0,8)+' · '+yas+' sn'+(yas>150?' <span style="color:#e74c3c">(eski)</span>':'')+(IETT.stale?' · önbellek':'')+'</p>':''}
+try{if(FB)FB.collection('iettSure').onSnapshot(q=>{const t={};q.forEach(d=>{const x=d.data();if(x&&Array.isArray(x.o))t[d.id]=x.o});IETT.tab=t},e=>{})}catch(e){}
 if(FB)FB.collection('ayar').doc('iett').onSnapshot(d=>{const x=d.data();if(x&&typeof x.u==='string'){IETT_URL=x.u;localStorage.setItem('iettUrl',x.u);const i=document.getElementById('iettUrl');if(i&&!i.value)i.value=x.u}},e=>{});
