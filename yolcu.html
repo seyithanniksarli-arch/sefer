@@ -89,6 +89,7 @@ function baslat(){
   firebase.initializeApp(FBC);const db=firebase.firestore();
   db.collection('plan').doc(bugun()).onSnapshot(d=>{const x=d.data()||{};PLAN={mim:x.mim?JSON.parse(x.mim):[],mur:x.mur?JSON.parse(x.mur):[]};planVar=!!(x.mim||x.mur);ciz()},()=>hata());
   db.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v)}catch(e){}}haritaCiz()},()=>{});
+  sureOku(db);setInterval(()=>sureOku(db),300000);
   db.collection('canli').onSnapshot(sn=>{CANLI={};sn.forEach(d=>{CANLI[d.id]=d.data()});ciz()},()=>{});
  }catch(e){hata()}
  setInterval(ciz,10000);
@@ -105,6 +106,12 @@ function konumBul(){
   if(em>1500)alert('En yakın durak '+en+', yaklaşık '+(em/1000).toFixed(1)+' km uzakta.');
  },()=>alert('Konum izni verilmedi. Durağı listeden seçebilirsin.'),{enableHighAccuracy:true,timeout:15000});
 }
+let SURE={};
+function sureOku(db){try{db.collection('ayar').doc('sureler').get().then(d=>{const x=d.data();SURE=(x&&x.s&&typeof x.s==='object')?x.s:{};ciz()}).catch(()=>{})}catch(e){}}
+function sOrt(a){a=a.slice().sort((x,y)=>x-y);const n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2}
+function sMed(id,g,pl){const o=(SURE[id]||[]).filter(x=>x&&x.g===g&&x.s>0).map(x=>x.s);if(o.length<5)return null;const m0=sOrt(o),L=o.filter(x=>x>=m0*0.5&&x<=m0*2);if(L.length<4)return null;const m=sOrt(L);if(pl>0&&(m<pl*0.6||m>pl*1.8))return null;return m}
+function sGrup(ms){const d=new Date(ms).getDay();return d===0||d===6?'hs':'hi'}
+function sKum(hat,D){try{const g=sGrup(Date.now()),S=[hat=='mur'?'Muratçeşme':'Fatih Market'].concat(D.map(x=>x[0])),P=[0].concat(D.map(x=>x[1]));let c=0,u=false;const R=[];for(let i=1;i<S.length;i++){const pl=(P[i]-P[i-1])*60,m=sMed((S[i-1]+'__'+S[i]).replace(/\//g,'-'),g,pl);if(m!==null)u=true;c+=m!==null?m:pl;R.push([D[i-1][0],c/60])}return u?R:D}catch(e){return D}}
 function canliBilgi(plk,dep){
  const c=CANLI[plk];if(!c||Date.now()-c.z>120000||c.dep!==dep)return null;return c;
 }
@@ -119,9 +126,9 @@ function gelenler(hat,yon){
  const n=simdiSn(),L=[],E=HAT[hat].filter(x=>x[0]==secili&&x[2]==yon);if(!E.length)return [];
  for(const [s,p,D] of PLAN[hat]||[]){
   for(const e of E){
-   let t=varis(hat,s,D,e[1]);const c=canliBilgi(p,s);
+   let t=varis(hat,s,sKum(hat,D),e[1]);const c=canliBilgi(p,s);
    if(c&&c.gec!=null&&e[1]>0)t+=Math.max(-60,c.gec);
-   if(t<n-30)continue;
+   if(n>=(Math.floor(t/60)+1)*60)continue;
    L.push({t:t,p:p,c:!!c,yolda:n>=s});
   }
  }
@@ -135,8 +142,8 @@ function ciz(){
  for(const hat of ['mim','mur'])for(const yon of ['g','d']){
   const L=gelenler(hat,yon);if(!L.length)continue;var_=true;
   h+='<div class="kart"><div class="hat '+hat+'">● '+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
-  for(const x of L){const d=x.t-n,k=d>60?Math.ceil(d/60):0;
-   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+(d<=0?' durakta':'')+'">'+(d>60?k+' dk':d>0?'Geliyor':'Durakta')+'</div></div>'}
+  for(const x of L){const d=x.t-n,k=d>120?Math.ceil(d/60):0;
+   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+(d<=120?' durakta':'')+'">'+(d>120?k+' dk':d>0?'Geliyor / Durakta':'Durakta')+'</div></div>'}
   h+='</div>';
  }
  el.innerHTML=var_?h:'<p class="bilgi">Bu durağa bugün başka minibüs gelmiyor.</p>';

@@ -330,10 +330,10 @@ function aktifGoster(p,s,el){
  if(dep===null){AKT=null;return false}{const Dt=dur2(dep,TB||simdi),tr=Dt[Dt.length-1][1]*60;if(s-dep>=tr){AKT=null;const m=Math.floor(tr/60),sn=Math.round(tr%60);el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+String(m).padStart(2,'0')+':'+String(sn).padStart(2,'0')+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">Sefer tamamlandı</div><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>';return true}}AKT=dep;
  const D=dur2(dep,B),e=s-dep;
  let ad=B=='mur'?'Muratçeşme – kalkış':'Fatih Market – kalkış',hedef=dep;
- if(e>=0){const h=D.find(x=>x[1]*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
+ if(e>=0){const h=D.find(x=>(Math.floor(x[1])+1)*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
  const a=Math.abs(e),sw=(e<0?'-':'')+String(Math.floor(a/60)).padStart(2,'0')+':'+String(a%60).padStart(2,'0');
  const k=hedef-s;
- el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?(typeof trafikSatir==='function'?trafikSatir(ad,k,dep,D,B):'')+(typeof ietSatir==='function'?ietSatir(D,D.findIndex(x=>x[0]===ad)):''):'')+(typeof saatYazi==='function'?saatYazi():'');
+ el.innerHTML='<div style="font-size:84px;text-align:center;font-weight:bold;font-variant-numeric:tabular-nums">'+sw+'</div><div style="font-size:34px;text-align:center;color:#1fa36a;font-weight:bold">'+ad+'</div><p style="text-align:center;font-size:20px">Plan: '+fmt(hedef)+(k>=0?' – kalan '+Math.floor(k/60)+':'+String(k%60).padStart(2,'0'):' – '+Math.floor(-k/60)+':'+String(-k%60).padStart(2,'0')+' geç')+'</p><p class="kucuk" style="text-align:center">'+fmt(dep)+' seferi</p>'+(e>=0?(typeof trafikSatir==='function'?trafikSatir(ad,k,dep,D,B):''):'')+(e>=-120?(typeof ietSatir==='function'?ietSatir(D,D.findIndex(x=>x[0]===ad),e):''):'')+(typeof saatYazi==='function'?saatYazi():'');
  if(e===0)bip(1500,0.8);
  return true;
 }
@@ -519,7 +519,7 @@ function durakSil(){const n=document.getElementById('durakSec').value;if(!KONUM[
 function durakKaydet(){if(FB)FB.collection('ayar').doc('duraklar').set({v:JSON.stringify(KONUM),z:Date.now()}).catch(e=>alert('Durak kaydedilemedi: '+e.code))}
 if(FB)FB.collection('ayar').doc('admin').onSnapshot(d=>{const x=d.data();if(x&&x.h){SIFRE_H=x.h;adminKontrol()}},e=>{});
 if(FB)FB.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v);imleriCiz()}catch(e){}}},e=>{});
-function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];canliGonder(p);const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
+function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];canliGonder(p);try{if(typeof ogrenKonum==='function')ogrenKonum(BENKONUM[0],BENKONUM[1])}catch(e){}const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
 tarihSec(tarih,true);
 document.addEventListener('change',()=>kaydet());
 document.addEventListener('input',()=>kaydet());
