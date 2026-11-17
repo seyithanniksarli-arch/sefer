@@ -1,6 +1,6 @@
 // BL-105 basit service worker: kabuk onbellegi, html/js icin ag-oncelikli.
 // Surum degisince CACHE adini artir.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'bl105-kabuk-' + VERSION;
 const KABUK = [
   './', 'index.html', 'yolcu.html',
