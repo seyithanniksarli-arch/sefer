@@ -1,0 +1,60 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android/**'
+      - '.github/workflows/apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: APK derle
+        run: gradle -p android assembleSoforRelease assembleYolcuRelease --no-daemon --stacktrace
+
+      - name: APK dosyalarini hazirla
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/sofor/release/app-sofor-release.apk dist/Sefer-Sirasi.apk
+          cp android/app/build/outputs/apk/yolcu/release/app-yolcu-release.apk dist/Minibus-Nerede.apk
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BL105-Sofor-APK
+          path: dist/Sefer-Sirasi.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BL105-Yolcu-APK
+          path: dist/Minibus-Nerede.apk
+
+      - name: latest surumune ekle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: BL-105 APK (son surum)
+          body: |
+            Sefer-Sirasi.apk: sofor uygulamasi
+            Minibus-Nerede.apk: yolcu uygulamasi
+            Kisisel kullanim icin, Play Store icin degil.
+          files: |
+            dist/Sefer-Sirasi.apk
+            dist/Minibus-Nerede.apk
+          make_latest: true

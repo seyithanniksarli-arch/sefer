@@ -1,0 +1,69 @@
+plugins {
+    id 'com.android.application'
+}
+
+// ---- TEK YERDEN AYAR: web uygulamalarinin adresi ----
+def BASE_URL = 'https://seyithanniksarli-arch.github.io/sefer'
+// -----------------------------------------------------
+
+android {
+    namespace 'tr.bl105.app'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        bl105 {
+            // Sabit anahtar: guncellemelerde ayni imza korunur (kisisel kullanim)
+            storeFile rootProject.file('bl105.jks')
+            storePassword 'bl105bl105'
+            keyAlias 'bl105'
+            keyPassword 'bl105bl105'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.bl105
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.bl105
+        }
+    }
+
+    flavorDimensions 'app'
+    productFlavors {
+        sofor {
+            dimension 'app'
+            applicationId 'tr.bl105.sofor'
+            buildConfigField 'String', 'START_URL', "\"${BASE_URL}/index.html\""
+            buildConfigField 'boolean', 'BACKGROUND_SERVICE', 'true'
+        }
+        yolcu {
+            dimension 'app'
+            applicationId 'tr.bl105.yolcu'
+            buildConfigField 'String', 'START_URL', "\"${BASE_URL}/yolcu.html\""
+            buildConfigField 'boolean', 'BACKGROUND_SERVICE', 'false'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

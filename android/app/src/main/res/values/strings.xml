@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notif_channel">Arka plan çalışma</string>
+    <string name="notif_title">Sefer Sırası çalışıyor</string>
+    <string name="notif_text">Konum ve sıra takibi için uygulama açık tutuluyor</string>
+</resources>
