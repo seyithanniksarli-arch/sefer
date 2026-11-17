@@ -67,7 +67,7 @@ function takipDurdur(m){
  if(KILDIN)KILDIN();KILDIN=null;clearInterval(KILHB);KIL=null;
  sayacUyari(m);try{if(navigator.vibrate)navigator.vibrate([300,150,300])}catch(e){}
 }
-function sayacUyari(m){const s=document.getElementById('sayac');if(s)s.innerHTML='<div style="background:#fdecea;color:#8a1f17;border-radius:14px;padding:14px 16px;font-size:18px;font-weight:700;line-height:1.35">⚠ '+m+'</div>';const d=s&&s.closest('details');if(d&&!d.open){d.open=true}}
+function sayacUyari(m){const s=document.getElementById('sayac');if(s)s.innerHTML='<div class="uyari-kutu">⚠ '+m+'</div>';const d=s&&s.closest('details');if(d&&!d.open){d.open=true}}
 const takip0=takip;
 takip=async function(){
  const p=document.getElementById('benim').value.trim(),oto=OTO;

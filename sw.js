@@ -1,10 +1,10 @@
 // BL-105 basit service worker: kabuk onbellegi, html/js icin ag-oncelikli.
 // Surum degisince CACHE adini artir.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'bl105-kabuk-' + VERSION;
 const KABUK = [
   './', 'index.html', 'yolcu.html',
-  'saat.js', 'ekle.js', 'sofor.js', 'izin.js', 'iett.js', 'trafik.js', 'ogren.js',
+  'saat.js', 'ekle.js', 'sofor.js', 'izin.js', 'iett.js', 'trafik.js', 'ogren.js', 'sekme.js',
   'sofor-ikon.svg', 'sofor-ikon.png',
   'icon-sofor-192.png', 'icon-sofor-512.png', 'icon-sofor-maskable-192.png', 'icon-sofor-maskable-512.png',
   'icon-yolcu-192.png', 'icon-yolcu-512.png', 'icon-yolcu-maskable-192.png', 'icon-yolcu-maskable-512.png',

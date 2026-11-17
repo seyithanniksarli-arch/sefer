@@ -9,10 +9,10 @@ function trafikSorgu(dep,D,ad){if(TT.yuk||TTN>=DURDUR)return;const n=Date.now();
 function trafikKalan(a,dep,D,B){try{if(typeof ogrenKalan==='function'){const r=ogrenKalan(a,dep,D,B);if(r!==null&&r!==undefined)return r}}catch(e){}if(TT.dep===dep&&TT.v&&TT.v[a]!==undefined)return Math.max(0,TT.v[a]-Math.floor((Date.now()-TT.z)/1000));return null}
 function trafikEk(ad,dep,D,B,st){
  const ia=D.findIndex(x=>x[0]===ad),L=B=='mim'?['Metrobüs','TÜYAP']:(B=='mur'&&D.length?[D[D.length-1][0]]:[]),n=ND(),ns=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();let h='';
- L.forEach(a=>{const ix=D.findIndex(x=>x[0]===a),d=D[ix];if(!d||ix<=ia)return;const kt=trafikKalan(a,dep,D,B);if(kt===null)return;const f=kt-(dep+d[1]*60-ns);h+='<div style="'+st+'font-size:20px;font-weight:bold;color:'+(f<=0?'#1fa36a':(f<=120?'#f1c40f':'#e74c3c'))+'">'+a+' · varış '+dkYaz(kt)+'</div>'});
+ L.forEach(a=>{const ix=D.findIndex(x=>x[0]===a),d=D[ix];if(!d||ix<=ia)return;const kt=trafikKalan(a,dep,D,B);if(kt===null)return;const f=kt-(dep+d[1]*60-ns);h+='<div class="sat sat-'+(f<=0?'ok':(f<=120?'uy':'kt'))+'">'+SVG_TRAFIK+'<span class="sat-ad">'+a+'</span><b>varış '+dkYaz(kt)+'</b></div>'});
  return h}
 function trafikSatir(ad,k,dep,D,B){
- const st='text-align:center;margin:6px 0;';
+ const st='';
  let og=null;try{if(typeof ogrenKalan==='function')og=ogrenKalan(ad,dep,D,B)}catch(e){}
  const tt=TT_KEY&&KONUM[ad]&&BENKONUM;
  if(og===null){
@@ -22,7 +22,7 @@ function trafikSatir(ad,k,dep,D,B){
  if(tt){ttSayac();trafikSorgu(dep,D,ad)}
  if(og===null&&(TT.dep!==dep||!TT.v||TT.v[ad]===undefined)){if(TT.hata&&!TT.yuk&&TT.dep===dep&&!TT.v)return '<p class="kucuk" style="'+st+'">Trafik alınamadı: '+TT.hata+'</p>';return '<p class="kucuk" style="'+st+'">'+(TTN>=DURDUR?'Günlük trafik sorgu hakkı doldu':'Trafik hesaplanıyor...')+'</p>'}
  const kalanTr=og!==null?og:Math.max(0,TT.v[ad]-Math.floor((Date.now()-TT.z)/1000));
- const fark=kalanTr-k;GEC=fark;GECZ=Date.now();const r=fark<=0?'#1fa36a':(fark<=120?'#f1c40f':'#e74c3c');
- return '<div style="'+st+'font-size:26px;font-weight:bold;color:'+r+'">Varış '+dkYaz(kalanTr)+'</div>'+trafikEk(ad,dep,D,B,st)+'<p class="kucuk" style="'+st+'color:#888">'+(og!==null?'öğrenilmiş süre ('+ogrenOrnek(ad,dep,D,B)+' segment)'+(tt?' · ':''):'')+(!tt&&og!==null?'':(TTN>=DURDUR?'Günlük trafik sorgu hakkı doldu':'Trafik '+Math.round(trafikAralik(D)/60)+" dk'da bir güncelleniyor · bugün "+TTN+'/'+GUNLUK))+'</p>';
+ const fark=kalanTr-k;GEC=fark;GECZ=Date.now();const r=fark<=0?'ok':(fark<=120?'uy':'kt');
+ return '<div class="sat sat-'+r+'">'+SVG_TRAFIK+'<span class="sat-ad">Canlı trafik</span><b>Varış '+dkYaz(kalanTr)+'</b></div>'+trafikEk(ad,dep,D,B,st)+'<p class="kucuk" style="'+st+'">'+(og!==null?'öğrenilmiş süre ('+ogrenOrnek(ad,dep,D,B)+' segment)'+(tt?' · ':''):'')+(!tt&&og!==null?'':(TTN>=DURDUR?'Günlük trafik sorgu hakkı doldu':'Trafik '+Math.round(trafikAralik(D)/60)+" dk'da bir güncelleniyor · bugün "+TTN+'/'+GUNLUK))+'</p>';
 }
 if(FB)FB.collection('ayar').doc('tomtom').onSnapshot(d=>{const x=d.data();if(x&&x.k){TT_KEY=x.k;localStorage.setItem('ttkey',x.k);const i=document.getElementById('ttKey');if(i&&!i.value)i.value=x.k}},e=>{});

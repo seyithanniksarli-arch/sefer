@@ -60,7 +60,7 @@
     /* ---------- CSS ---------- */
     var css = [
       '.ek-serit,.ek-serit *,.ek-kutu,.ek-kutu *{box-sizing:border-box}',
-      '.ek-serit{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:8px;',
+      '.ek-serit{position:fixed;left:8px;right:8px;bottom:calc(8px + var(--alt-boslugu,env(safe-area-inset-bottom,0px)));z-index:45;display:flex;align-items:center;gap:8px;',
       'background:#10202e;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:8px 6px 8px 12px;font:600 14px/1.25 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;',
       'box-shadow:0 6px 22px rgba(0,0,0,.35);max-width:560px;margin:0 auto;cursor:pointer;animation:ekYuk .45s ease-out both;-webkit-tap-highlight-color:transparent}',
       '.ek-serit .ek-m{flex:1;min-width:0}',

@@ -2,84 +2,259 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>Sefer Sırası</title>
-<link rel="icon" type="image/svg+xml" href="sofor-ikon.svg"><link rel="apple-touch-icon" href="sofor-ikon.png"><meta name="apple-mobile-web-app-title" content="Sefer Sırası"><meta name="theme-color" content="#0f8a57">
+<link rel="icon" type="image/svg+xml" href="sofor-ikon.svg"><link rel="apple-touch-icon" href="sofor-ikon.png"><meta name="apple-mobile-web-app-title" content="Sefer Sırası">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14212D" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest-sofor.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
 <style>
-:root{--yesil:#1fa36a;--koyu:#0f8a57;--lac:#10202e;--mavi:#16507e;--sari:#ffcf33;--zemin:#eef2f5;--gri:#5b6b7a}
-body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--lac);font-size:18px}
-.ust{background:linear-gradient(135deg,#0f8a57 0%,#1fa36a 45%,#16507e 100%);color:#fff;padding:20px 16px 50px;position:relative;overflow:hidden;display:flex;gap:14px;align-items:center}
-.ust::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-24px;height:48px;background:var(--zemin);border-radius:50% 50% 0 0}
-.ust .ik{width:50px;height:50px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ust h1{margin:0;font-size:28px;font-weight:900;letter-spacing:-.5px;line-height:1}
-.ust p{margin:5px 0 0;font-size:15px;font-weight:600;opacity:.92}
-.ust .kod{margin-left:auto;align-self:flex-start;background:var(--sari);color:var(--lac);font-weight:900;font-size:15px;padding:6px 10px;border-radius:9px;letter-spacing:.5px}
-.ic{padding:0 14px 24px;position:relative;z-index:1}
-h2{font-size:24px;font-weight:900;margin:16px 2px 8px;letter-spacing:-.3px}
+/* ===== Renk değişkenleri: açık tema (Temiz ve aydınlık) ===== */
+:root{
+ --zemin:#F4F7F9;--kart:#FFFFFF;--cizgi:#DDE5EB;--cizgi2:#E7EDF2;
+ --yazi:#0E1B2A;--yazi2:#34465A;--yazi3:#4A5B6A;--pasif:#9AA9B6;--giris-kenar:#9AA9B6;
+ --yesil:#0F7A4F;--yesil-yazi:#0F7A4F;
+ --mavi:#1A5FB4;--mavi-yazi:#1A5FB4;--mavi-zemin:#E4EEFA;--tab-aktif:#1A5FB4;--nokta:#1A5FB4;--halka:#CFE0F5;
+ --kirmizi:#B3261E;--mur:#C62F29;--mur-kenar:#C62F29;--mur-yazi:#B42620;
+ --turuncu:#B35A00;--rozet:#FFCF33;--rozet-yazi:#10202E;
+ --ok:#0F7A4F;--uy:#B35A00;--kt:#B3261E;
+ --uyari-zemin:#FDECEA;--uyari-yazi:#8A1F17;--bos-zemin:#FFF6D6;
+ --gol:rgba(14,27,42,.06);
+ --tab-yuk:78px;--alt-boslugu:78px;
+}
+/* ===== Koyu tema: Aracım gece / Sıra gece ===== */
+@media (prefers-color-scheme: dark){
+:root{
+ --zemin:#0B1620;--kart:#14212D;--cizgi:#26384A;--cizgi2:#203243;
+ --yazi:#EAF1F7;--yazi2:#C3CFDA;--yazi3:#A9B8C6;--pasif:#6B7F91;--giris-kenar:#6B7F91;
+ --yesil:#0F7A4F;--yesil-yazi:#4CC38A;
+ --mavi:#1A5FB4;--mavi-yazi:#7DB1F2;--mavi-zemin:#1C3350;--tab-aktif:#8DBAF4;--nokta:#4D8FE0;--halka:#2B4F80;
+ --kirmizi:#B3261E;--mur:#C62F29;--mur-kenar:#E0564E;--mur-yazi:#FF9A92;
+ --turuncu:#F0A04B;--rozet:#DCE6F0;--rozet-yazi:#0E1B2A;
+ --ok:#4CC38A;--uy:#F0A04B;--kt:#FF9A92;
+ --uyari-zemin:#3B1F1D;--uyari-yazi:#FFB4AB;--bos-zemin:#33291A;
+ --gol:rgba(0,0,0,.3);
+}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:light dark}
+body{margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--yazi);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.35}
+button{font-family:inherit;cursor:pointer}
+[hidden]{display:none!important}
+/* ===== Üst başlık ===== */
+.ust{background:var(--kart);padding:16px 16px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--cizgi)}
+.ust .ik{width:48px;height:48px;border-radius:14px;background:var(--yesil);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ust .ad{flex:1;min-width:0}
+.ust h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.ust p{margin:3px 0 0;font-size:15px;font-weight:600;color:var(--yazi3)}
+.rozet{background:var(--rozet);color:var(--rozet-yazi);font-weight:800;font-size:15px;padding:7px 11px;border-radius:9px;letter-spacing:.5px}
+/* ===== Sekme alanları ===== */
+.sek{display:none}
+body[data-sekme=aracim] #sek_aracim,body[data-sekme=sira] #sek_sira,body[data-sekme=seferler] #sek_seferler,body[data-sekme=daha] #sek_daha{display:block}
+.sar{max-width:600px;margin:0 auto;padding:16px 16px calc(var(--alt-boslugu) + 16px)}
+h2{font-size:24px;font-weight:800;margin:0;letter-spacing:-.3px}
 h3{font-size:18px;font-weight:800;margin:14px 0 6px}
-.sekmeler{display:flex;gap:6px;margin-bottom:8px;background:#fff;padding:5px;border-radius:14px;box-shadow:0 2px 10px rgba(16,32,46,.07)}
-.sekmeler button{flex:1;padding:12px 6px;font-family:inherit;font-size:16px;font-weight:700;border:0;border-radius:10px;background:transparent;color:#4d5d6b}
-.sekmeler button.aktif{background:var(--yesil);color:#fff}
-.gunler button.aktif{background:var(--lac)}
-#bMim.aktif{background:#1e63b8}
-#bMur.aktif{background:#d33b34}
-label{display:block;margin-top:10px;color:#4d5d6b;font-weight:600;font-size:15px}
-textarea,select,input[type=date],input[type=time],input[type=number],input:not([type]){font-family:inherit;color:var(--lac);background:#fff;border:1.5px solid #d5dde5;border-radius:10px}
-textarea{width:100%;box-sizing:border-box;font-size:20px;padding:10px}
-input:focus,textarea:focus,select:focus{outline:none;border-color:var(--yesil);box-shadow:0 0 0 3px rgba(31,163,106,.18)}
+.bas{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:2px 0 12px}
+.bas span{font-size:14px;font-weight:600;color:var(--yazi3)}
+.kucuk{color:var(--yazi3);font-size:14px;font-weight:600}
+label{display:block;margin-top:10px;color:var(--yazi2);font-weight:700;font-size:15px}
+.kutu{background:var(--kart);border:1px solid var(--cizgi);border-radius:16px;padding:14px}
+.kutu+.kutu,.kutu+details,details+.kutu{margin-top:12px}
+/* ===== Aracım: sabit plaka kartı ===== */
+.plaka-sar{position:sticky;top:0;z-index:20;background:var(--zemin);padding:12px 16px 8px}
+.plaka-kart{max-width:568px;margin:0 auto;background:var(--kart);border:1px solid var(--cizgi);border-radius:20px;padding:12px 14px 10px}
+.plaka-sat{display:flex;align-items:flex-end;gap:12px}
+.plaka-sat .pl{width:112px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+.plaka-sat label{margin:0;font-size:14px;font-weight:700;color:var(--yazi2)}
+#benim{width:100%;height:52px;border:2px solid var(--giris-kenar);border-radius:14px;background:var(--zemin);color:var(--yazi);font-family:inherit;font-size:22px;font-weight:800;padding:0 14px;outline:none}
+#benim:focus{border-color:var(--mavi-yazi)}
+.takip-dugme{flex:1;min-width:0;height:52px;border:0;border-radius:14px;background:var(--yesil);color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px}
+.takip-dugme.acik{background:var(--kirmizi)}
+.durum{margin:8px 0 0;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--yazi3)}
+.durum i{width:10px;height:10px;border-radius:50%;background:var(--pasif);flex-shrink:0}
+.durum.acik i{background:var(--yesil-yazi)}
+.aracim-ic{display:flex;flex-direction:column;gap:12px;padding-top:8px}
+/* ===== Aktif sefer kartı ===== */
+.akt{background:var(--kart);border:1px solid var(--cizgi);border-radius:20px;overflow:hidden}
+.akt-bas{background:var(--mavi);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.akt-bas span:first-child{font-size:15px;font-weight:800;letter-spacing:.6px}
+.akt-bas span:last-child{font-size:17px;font-weight:800}
+.akt-gov{padding:16px 20px 20px;text-align:center}
+.akt-sure{font-size:clamp(56px,24.6vw,96px);line-height:1;font-weight:800;letter-spacing:-3px;font-variant-numeric:tabular-nums;color:var(--yazi)}
+.akt-sure.neg{font-size:clamp(48px,19vw,80px)}
+.akt-sure.kirmizi{color:var(--kt)}
+.akt-ad{margin-top:6px;font-size:30px;font-weight:800;color:var(--yesil-yazi);line-height:1.15}
+.akt-plan{margin:8px 0 0;font-size:18px;font-weight:600;color:var(--yazi2)}
+.ekler{display:flex;flex-direction:column;gap:8px}
+.ekler:empty{display:none}
+.sat{min-height:56px;background:var(--kart);border:1px solid var(--cizgi);border-radius:14px;display:flex;align-items:center;gap:12px;padding:6px 16px}
+.sat svg{flex-shrink:0}
+.sat .sat-ad{flex:1;min-width:0;font-size:16px;font-weight:600;color:var(--yazi2)}
+.sat b{font-size:20px;font-weight:800;text-align:right}
+.sat.sat-ok b{color:var(--ok)}.sat.sat-uy b{color:var(--uy)}.sat.sat-kt b{color:var(--kt)}
+.sat.sat-448 .sat-ad{font-size:17px;font-weight:700;color:var(--yazi)}
+.sat.sat-448 b{font-size:17px}
+.sat-not,.ekler p.kucuk{margin:0;text-align:center;font-size:13px;font-weight:600;color:var(--yazi3)}
+.saat-not{margin:4px 0 0;text-align:center;font-size:14px;font-weight:600;color:var(--yazi3)}
+.dur-bas{display:flex;align-items:baseline;justify-content:space-between;margin:6px 0 12px}
+.dur-bas span{font-size:14px;font-weight:600;color:var(--yazi3)}
+.dur-kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:16px;overflow:hidden}
+.dur-sat{min-height:54px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--cizgi2)}
+.dur-sat:last-child{border-bottom:0}
+.dur-sat .dn{flex:1;min-width:0;font-size:18px;font-weight:700}
+.dur-sat .dz{font-size:16px;font-weight:600;color:var(--yazi2);font-variant-numeric:tabular-nums}
+.dur-sat .dd{min-width:52px;text-align:right;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.dur-sat .ik-bitti{flex-shrink:0}
+.dur-sat .ik-simdi{width:22px;height:22px;border-radius:50%;background:var(--nokta);border:5px solid var(--halka);flex-shrink:0}
+.dur-sat .ik-sonra{width:22px;height:22px;border-radius:50%;border:2px solid var(--pasif);flex-shrink:0}
+.dur-sat svg{flex-shrink:0}
+.uyari-kutu{background:var(--uyari-zemin);color:var(--uyari-yazi);border-radius:14px;padding:14px 16px;font-size:18px;font-weight:700;line-height:1.35}
+#sayac:empty::before{content:"Takibi başlatınca aktif sefer, geri sayım ve duraklar burada görünür.";display:block;background:var(--kart);border:1px dashed var(--cizgi);border-radius:16px;padding:18px 16px;text-align:center;font-size:16px;font-weight:600;color:var(--yazi3)}
+#sayac{display:flex;flex-direction:column;gap:12px}
+.imza{margin:12px 0 0;text-align:center;font-size:14px;font-weight:600;color:var(--yazi3)}
+/* ===== Sabit alt düğmeler (yalnız Aracım) ===== */
+#aksiyon{display:none;position:fixed;left:0;right:0;bottom:var(--tab-yuk);z-index:40;background:var(--kart);border-top:1px solid var(--cizgi);padding:10px 16px}
+body[data-sekme=aracim] #aksiyon{display:block}
+#aksiyon .ic{max-width:568px;margin:0 auto;display:flex;gap:10px}
+#aksiyon button{flex:1;min-height:60px;border:0;border-radius:16px;color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 6px}
+#aksiyon .cik{background:var(--kirmizi)}
+#aksiyon .gir{background:var(--yesil)}
+/* ===== Alt sekme çubuğu ===== */
+#alt{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--kart);border-top:1px solid var(--cizgi);padding:6px 8px max(14px,env(safe-area-inset-bottom,0px))}
+#alt .ic{max-width:600px;margin:0 auto;display:flex;gap:4px}
+#alt button{flex:1;min-width:0;min-height:58px;border:0;border-radius:14px;background:transparent;color:var(--yazi3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;font-weight:700;padding:0}
+#alt button[aria-current=page]{background:var(--mavi-zemin);color:var(--tab-aktif);font-weight:800}
+/* ===== Sıra sekmesi ===== */
+.hat-sek{display:flex;gap:10px}
+.hat-sek button{flex:1;min-height:48px;border-radius:12px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--kart)}
+.hat-sek .nk{width:10px;height:10px;border-radius:50%}
+#bMim{border:2px solid var(--mavi-yazi);color:var(--mavi-yazi)}#bMim .nk{background:var(--mavi-yazi)}
+#bMim.aktif{background:var(--mavi);border-color:var(--mavi);color:#fff}
+#bMur{border:2px solid var(--mur-kenar);color:var(--mur-yazi)}#bMur .nk{background:var(--mur-kenar)}
+#bMur.aktif{background:var(--mur);border-color:var(--mur);color:#fff}
+#bMim.aktif .nk,#bMur.aktif .nk{background:#fff}
+.mini{display:flex;gap:6px;margin-top:10px}
+.mini button{flex:1;min-width:0;min-height:40px;border:1.5px solid var(--cizgi);border-radius:10px;background:var(--kart);color:var(--yazi2);font-size:14px;font-weight:700;padding:0 4px}
+.mini button.aktif{background:var(--mavi-zemin);border-color:var(--tab-aktif);color:var(--tab-aktif);font-weight:800}
+.karolar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kr{min-height:104px;background:var(--kart);border:1px solid var(--cizgi);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.kr.ben{border:2px solid var(--mavi);padding:9px 11px}
+.kr .kn{font-size:14px;font-weight:700;color:var(--yazi3)}
+.kr .kp{font-size:clamp(22px,7.6vw,30px);line-height:1;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kr .kt{min-height:20px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.kr .et{font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;color:#fff;white-space:nowrap}
+.et.sirada{background:var(--yesil)}.et.sen{background:var(--mavi)}.et.ariza{background:var(--kirmizi)}
+.et.tur{background:transparent;color:var(--yazi3);border:1px solid var(--cizgi);padding:1px 7px}
+.kr.ariza-k{opacity:.7}
+.tarih-kutu label{margin:0 0 6px}
+#tarih{width:100%;font-size:18px;padding:10px;border-radius:10px}
+/* ===== Formlar ===== */
+textarea,select,input[type=date],input[type=time],input[type=number],input:not([type]),input[type=text]{font-family:inherit;color:var(--yazi);background:var(--zemin);border:1.5px solid var(--giris-kenar);border-radius:10px}
+textarea{width:100%;font-size:20px;padding:10px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mavi-yazi);box-shadow:0 0 0 3px var(--halka)}
 .arac{display:flex;gap:8px;align-items:center;margin:6px 0}
-.arac span{width:64px;font-weight:800;font-size:20px}
+.arac span{width:auto;min-width:52px;font-weight:800;font-size:20px}
 .arac select{flex:1;font-size:18px;padding:10px}
-.arac input{width:28px;height:28px}
+.arac input[type=checkbox]{width:28px;height:28px}
 input[type=checkbox]{accent-color:var(--yesil)}
-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;font-size:17px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #edf0f3}
-th{background:var(--lac);color:#fff;text-align:left;font-weight:700}
-th,td{padding:10px 8px;border-bottom:1px solid #edf0f3}
-tr.uyari td{background:#fdecea}
-tr.bos td{background:#fff6d6}
-button.ana{padding:16px;font-family:inherit;font-size:19px;font-weight:800;background:var(--yesil);color:#fff;border:0;border-radius:12px;width:100%;margin:12px 0;box-shadow:0 2px 6px rgba(16,32,46,.12)}
 button:disabled,textarea:disabled,select:disabled,input:disabled{opacity:.55}
-.kucuk{color:var(--gri);font-size:15px}
-details.bolum{background:#fff;border:0;border-radius:18px;margin:12px 0;padding:0 14px;box-shadow:0 2px 10px rgba(16,32,46,.07)}
-details.bolum>summary{font-size:20px;font-weight:900;padding:16px 2px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+button.ana{padding:16px;font-family:inherit;font-size:19px;font-weight:800;background:var(--yesil);color:#fff;border:0;border-radius:12px;width:100%;margin:12px 0}
+table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;font-size:16px;background:var(--kart);border-radius:12px;overflow:hidden;border:1px solid var(--cizgi)}
+th{background:var(--mavi-zemin);color:var(--tab-aktif);text-align:left;font-weight:800}
+th,td{padding:10px 8px;border-bottom:1px solid var(--cizgi2);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#sonuc,#carpi{overflow-x:auto}
+@media (max-width:380px){table{font-size:14px}th,td{padding:8px 5px}}
+tr.uyari td{background:var(--uyari-zemin)}
+tr.bos td{background:var(--bos-zemin)}
+/* ===== Açılır bölümler ===== */
+details.bolum{background:var(--kart);border:1px solid var(--cizgi);border-radius:16px;margin:12px 0 0;padding:0 14px}
+details.bolum>summary{font-size:18px;font-weight:800;padding:14px 2px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;min-height:56px}
 details.bolum>summary::-webkit-details-marker{display:none}
-details.bolum>summary::before{content:'›';display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;border-radius:50%;background:#eaf6f0;color:var(--koyu);font-size:24px;font-weight:900;transition:transform .15s}
+details.bolum>summary::before{content:'›';display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--mavi-zemin);color:var(--tab-aktif);font-size:24px;font-weight:800;transition:transform .15s}
 details.bolum[open]>summary::before{transform:rotate(90deg)}
 details.bolum[open]{padding-bottom:12px}
-#sayac:not(:empty){background:var(--lac);color:#fff;border-radius:16px;padding:8px 12px;margin-top:8px}
-#sayac .kucuk{color:#b8c4cf}
-label[style*="#e8edf3"]{color:var(--lac)!important}
-label[style*="#ffcf5a"]{color:#b7791f!important}
-[style*="#2c3a4b"]{border-color:#edf0f3!important}
-#bulut{color:var(--gri)}
-button[style*="#8e44ad"]{background:var(--lac)!important}
-/* tasarim */
-/* tasarim */
+details.bolum details.bolum{border-radius:12px;background:var(--zemin)}
+.aks2{display:flex;gap:8px;margin-top:8px}
+.aks2 button{flex:1;min-height:48px;border:0;border-radius:12px;color:#fff;font-size:16px;font-weight:800}
+#bulut{color:var(--yazi3)}
+/* eski satır içi renkleri koyu temada uyumlu tut */
+[style*="#2c3a4b"],[style*="#edf0f3"]{border-color:var(--cizgi2)!important}
+label[style*="#ffcf5a"]{color:var(--turuncu)!important}
+b[style*="#9fb0c3"]{color:var(--yazi3)!important}
+button[style*="#eaf6f0"]{background:var(--mavi-zemin)!important;color:var(--tab-aktif)!important}
+div[style*="color:#0f8a57"]{color:var(--yesil-yazi)!important}
+span[style*="#d33b34"]{background:var(--kirmizi)!important}
+@media (max-width:359px){.ust h1{font-size:21px}.rozet{font-size:13px;padding:6px 8px}.takip-dugme{font-size:15px}#aksiyon button{font-size:15px}.plaka-sat .pl{width:96px}}
+@media print{#alt,#aksiyon{display:none!important}}
 </style>
 </head>
-<body>
-<div class="ust"><div class="ik" style="background:none"><img src="sofor-ikon.svg" width="54" height="54" style="display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.2))" onerror="this.parentNode.style.display='none'"></div><div><h1>Sefer Sırası</h1><p>Şoför paneli</p></div><div class="kod">BL-105</div></div>
-<div class="ic">
-<div class="sekmeler gunler">
-<button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
-<button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
-<button id="g_paz" onclick="gunSec('paz')">Pazar</button>
+<body data-sekme="aracim">
+<header class="ust">
+ <div class="ik"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2.5"/><path d="M4 11h16M8 17v3M16 17v3"/><path d="M8 14h.01M16 14h.01"/></svg></div>
+ <div class="ad"><h1>Sefer Sırası</h1><p>Şoför paneli</p></div>
+ <span class="rozet">BL-105</span>
+</header>
+<div id="alan">
+<!-- ===== ARACIM ===== -->
+<section id="sek_aracim" class="sek" aria-label="Aracım">
+ <div class="plaka-sar"><div class="plaka-kart">
+  <div class="plaka-sat">
+   <div class="pl"><label for="benim">Plakan</label><input id="benim" type="text" inputmode="numeric" autocomplete="off" placeholder="örn. 03"></div>
+   <button type="button" id="takipDugme" class="takip-dugme" onclick="takipDugme()"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span id="takipYazi">Takibi başlat</span></button>
+  </div>
+  <p id="takipDurum" role="status" class="durum"><i aria-hidden="true"></i><span>Takip kapalı</span></p>
+ </div></div>
+ <div class="sar aracim-ic"><div id="sayac"></div><p class="imza">Seyithan Niksarlı tarafından geliştirildi</p></div>
+</section>
+<!-- ===== SIRA ===== -->
+<section id="sek_sira" class="sek" aria-label="Sıra">
+ <div class="sar">
+  <div class="hat-sek" role="tablist" aria-label="Hat">
+   <button id="bMim" class="aktif" role="tab" onclick="sekme('mim')"><span class="nk"></span>Mimarsinan</button>
+   <button id="bMur" role="tab" onclick="sekme('mur')"><span class="nk"></span>Muratçeşme</button>
+  </div>
+  <div class="mini" id="gunSec">
+   <button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
+   <button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
+   <button id="g_paz" onclick="gunSec('paz')">Pazar</button>
+  </div>
+  <div class="mini" id="mevsimSec">
+   <button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
+   <button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
+  </div>
+  <section aria-label="Araç sırası" style="margin-top:18px">
+   <div class="bas"><h2 id="siraBaslik">Mimarsinan sırası</h2><span id="siraSay"></span></div>
+   <div id="plakaKaro" class="karolar"></div>
+   <p class="kucuk" id="siraNot" style="margin:10px 2px 0">Sırayı kahya belirler.</p>
+  </section>
+  <div class="kutu tarih-kutu" style="margin-top:16px"><label for="tarih">Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)"></div>
+ </div>
+</section>
+<!-- ===== SEFERLER ===== -->
+<section id="sek_seferler" class="sek" aria-label="Seferler"><div class="sar"><div id="alanSeferler"></div></div></section>
+<!-- ===== DAHA FAZLA ===== -->
+<section id="sek_daha" class="sek" aria-label="Daha fazla"><div class="sar">
+ <div id="alanDaha"></div>
+ <details class="bolum" data-k="veri"><summary>Veriler</summary><p class="kucuk">Bu cihazdaki günlük kayıtları kopyala ya da başka cihazdan yapıştır.</p><div class="aks2"><button style="background:var(--mavi)" onclick="veriKopyala()">Verileri kopyala</button><button style="background:var(--yesil)" onclick="veriYapistir()">Verileri yapıştır</button></div></details>
+ <div id="bulut" class="kucuk" style="text-align:center;margin:14px 0 0"></div>
+ <p class="imza">Seyithan Niksarlı tarafından geliştirildi · BL-105</p>
+</div></section>
 </div>
-<div class="sekmeler gunler">
-<button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
-<button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
-</div>
-<div class="sekmeler">
-<button id="bMim" class="aktif" onclick="sekme('mim')">Mimarsinan</button>
-<button id="bMur" onclick="sekme('mur')">Muratçeşme</button>
-</div>
-<div style="margin:6px 0"><label>Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)" style="font-size:18px;padding:8px;width:100%;box-sizing:border-box;border-radius:8px"></div>
-<div class="sekmeler"><button onclick="veriKopyala()">Verileri kopyala</button><button onclick="veriYapistir()">Verileri yapıştır</button></div>
-<div id="alan"></div>
-<div id="bulut" class="kucuk" style="text-align:center;margin:10px 0"></div>
-</div>
-<div style="background:#10202e;color:#fff;text-align:center;padding:16px;font-size:13px;font-weight:600"><span style="opacity:.75">Seyithan Niksarlı tarafından geliştirildi</span> <b style="background:#ffcf33;color:#10202e;padding:3px 8px;border-radius:7px;margin-left:6px">BL-105</b></div>
+<!-- Sabit: Sıradan çıktım / Sıraya girdim (yalnız Aracım) -->
+<div id="aksiyon"><div class="ic">
+ <button type="button" class="cik" onclick="siraDurum(false)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg>Sıradan çıktım</button>
+ <button type="button" class="gir" onclick="siraDurum(true)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M8 8l-4 4 4 4M4 12h11"/></svg>Sıraya girdim</button>
+</div></div>
+<!-- Sabit alt sekme çubuğu -->
+<nav id="alt" aria-label="Ana gezinme"><div class="ic">
+ <button type="button" id="t_aracim" aria-current="page" onclick="altSekme('aracim')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2.5"/><path d="M4 11h16M8 17v3M16 17v3"/><path d="M8 14h.01M16 14h.01"/></svg>Aracım</button>
+ <button type="button" id="t_sira" onclick="altSekme('sira')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Sıra</button>
+ <button type="button" id="t_seferler" onclick="altSekme('seferler')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Seferler</button>
+ <button type="button" id="t_daha" onclick="altSekme('daha')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/></svg>Daha fazla</button>
+</div></nav>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -90,6 +265,7 @@ button[style*="#8e44ad"]{background:var(--lac)!important}
 <script src="iett.js"></script>
 <script src="trafik.js"></script>
 <script src="ogren.js"></script>
+<script src="sekme.js"></script>
 <script>try{if('serviceWorker' in navigator){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}})}}catch(e){}</script>
 <script src="ekle.js" defer></script>
 </body>

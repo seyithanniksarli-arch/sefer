@@ -27,13 +27,13 @@ function ietEta(b,hd,bati,now){const S=ietSira(bati),ti=S.indexOf(hd),yedek=Math
 function ietHat(){const b=(typeof TB!=='undefined'&&TB)||(typeof simdi!=='undefined'?simdi:null);return b}
 function ietOnde(bati){const L=[];(bati?YOLCU.d:YOLCU.g).forEach(a=>{const p=KONUM[kk(a)];if(p&&p.length>1&&!isNaN(p[0])&&!isNaN(p[1]))L.push([a,p])});if(!L.length||typeof BENKONUM==='undefined'||!BENKONUM)return [];let n=0,m=1e12;L.forEach((x,j)=>{const d=mesafe(BENKONUM,x[1]);if(d<m){m=d;n=j}});if(n+1<L.length&&mesafe(BENKONUM,L[n+1][1])<mesafe(L[n][1],L[n+1][1]))n++;return L.slice(n,n+2).map(x=>x[0])}
 function ietDur(D,i,e,now,st){let h='';if(!(e>=-120)||ietHat()!=='mim')return h;let bati=false;if(e>=0&&i>=0){const M=D.findIndex(x=>x[0]==='Metrobüs');bati=M>=0&&i>M}
- ietOnde(bati).forEach(a=>{const k=kk(a),L=ietYakin(IETT.v,KONUM[k],bati,now);L.forEach(x=>{x.dk=ietEta(x,k,bati,now)});const x=L[0];h+='<div style="'+st+'font-size:18px"><b>'+a+' → 448</b> '+(x?x.k+' ~'+x.dk+' dk':'yaklaşan yok')+'</div>'});return h}
+ ietOnde(bati).forEach(a=>{const k=kk(a),L=ietYakin(IETT.v,KONUM[k],bati,now);L.forEach(x=>{x.dk=ietEta(x,k,bati,now)});const x=L[0];h+='<div class="sat sat-448">'+SVG_OTOBUS+'<span class="sat-ad">'+a+' → 448</span><b>'+(x?x.k+' ~'+x.dk+' dk':'yaklaşan yok')+'</b></div>'});return h}
 function ietSatir(D,i,e){
  if(!IETT_URL||ietHat()!=='mim')return '';if(!(e>=-120))return '';ietEnrich();
- const st='text-align:center;margin:6px 0;';
- if(!IETT.v)return IETT.hata?'<p class="kucuk" style="'+st+'color:#888">İETT alınamadı</p>':'';
+ const st='';
+ if(!IETT.v)return IETT.hata?'<p class="kucuk" style="'+st+'">İETT alınamadı</p>':'';
  const now=Date.now();let h='';try{h=ietDur(D,i,e,now,st)}catch(x){h=''}
  const yas=Math.max(0,Math.round((now-IETT.z)/1000));
- return h?h+'<p class="kucuk" style="'+st+'color:#888;font-size:12px">İETT canlı · '+new Date(IETT.z).toTimeString().slice(0,8)+' · '+yas+' sn'+(yas>150?' <span style="color:#e74c3c">(eski)</span>':'')+(IETT.stale?' · önbellek':'')+'</p>':''}
+ return h?h+'<p class="kucuk" style="'+st+'">İETT canlı · '+new Date(IETT.z).toTimeString().slice(0,8)+' · '+yas+' sn'+(yas>150?' <span style="color:var(--kt)">(eski)</span>':'')+(IETT.stale?' · önbellek':'')+'</p>':''}
 try{if(FB)FB.collection('iettSure').onSnapshot(q=>{const t={};q.forEach(d=>{const x=d.data();if(x&&Array.isArray(x.o))t[d.id]=x.o});IETT.tab=t},e=>{})}catch(e){}
 if(FB)FB.collection('ayar').doc('iett').onSnapshot(d=>{const x=d.data();if(x&&typeof x.u==='string'){IETT_URL=x.u;localStorage.setItem('iettUrl',x.u);const i=document.getElementById('iettUrl');if(i&&!i.value)i.value=x.u}},e=>{});
