@@ -345,7 +345,7 @@ function aktifGoster(p,s,el){
  const B=TB||simdi;
  let dep=null;
  for(const x of (TP||PLAN[p]||[])){const D=dur2(x,B);const LP=TP||PLAN[p]||[];const nx=LP[LP.indexOf(x)+1];const son=Math.min(x+D[D.length-1][1]*60+600,nx!==undefined?nx-300:1e9);if(s>=x-15&&s<son&&!VARDI[x]){dep=x;break}}
- if(dep===null){AKT=null;return false}{const Dt=dur2(dep,TB||simdi),tr=Dt[Dt.length-1][1]*60;if(s-dep>=tr){AKT=null;const m=Math.floor(tr/60),sn=Math.round(tr%60);el.innerHTML=aktKart('AKTİF SEFER',fmt(dep).slice(0,5)+' kalkış',String(m).padStart(2,'0')+':'+String(sn).padStart(2,'0'),'Sefer tamamlandı',fmt(dep)+' seferi')+SAATY();return true}}AKT=dep;
+ if(dep===null){AKT=null;return false}{const Dt=dur2(dep,TB||simdi),tr=Dt[Dt.length-1][1]*60;if(s-dep>=tr){AKT=null;el.innerHTML=aktKart('AKTİF SEFER',fmt(dep).slice(0,5)+' kalkış',sure2(s-dep),'Sefer tamamlandı',fmt(dep)+' seferi')+SAATY();return true}}AKT=dep;
  const D=dur2(dep,B),e=s-dep;
  let ad=B=='mur'?'Muratçeşme – kalkış':'Fatih Market – kalkış',hedef=dep;
  if(e>=0){const h=D.find(x=>(Math.floor(x[1])+1)*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
