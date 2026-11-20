@@ -526,7 +526,12 @@ const kaydet0=kaydet;
 kaydet=function(){kaydet0();const k=tarih;clearTimeout(BT[k]);BT[k]=setTimeout(()=>bulutaGonder(k),1500)};
 try{
  firebase.initializeApp(FBC);FB=firebase.firestore();bulutDurum('☁ Bağlanıyor...');
+ let ilkAnlikVeri=false;
+ const baglantiZamanAsimi=setTimeout(()=>{
+  if(!ilkAnlikVeri)bulutDurum('☁ Yanıt bekleniyor… Sunucuya erişim testi yapılıyor');
+ },12000);
  FB.collection('gunler').onSnapshot(sn=>{
+  ilkAnlikVeri=true;clearTimeout(baglantiZamanAsimi);
   const db=dbOku();let yenile=false;
   sn.docChanges().forEach(c=>{if(c.type=='removed')return;const x=c.doc.data(),id=c.doc.id;if(!x||!x.v||GONDER[id]===x.v)return;try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}});
   localStorage.setItem('sefer_db',JSON.stringify(db));
@@ -534,8 +539,21 @@ try{
   const ae=document.activeElement;
   if(yenile&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))tarihSec(tarih,true);
   bulutDurum('☁ Bağlı – '+sn.size+' gün kayıtlı');
- },e=>bulutDurum('☁ Bağlanamadı: '+e.code));
-}catch(e){bulutDurum('☁ Bulut yüklenemedi, internet var mı?')}
+ },e=>{
+  clearTimeout(baglantiZamanAsimi);
+  bulutDurum('☁ Bağlantı hatası: '+(e.code||e.message||'bilinmeyen hata'));
+ });
+ // Dinleyici ilk veriyi getiremezse sunucuya küçük bir okuma isteği göndererek
+ // ağ erişimi ile dinleyici/izin sorununu birbirinden ayır.
+ setTimeout(()=>{
+  if(ilkAnlikVeri)return;
+  FB.collection('gunler').limit(1).get({source:'server'}).then(()=>{
+   if(!ilkAnlikVeri)bulutDurum('☁ Sunucuya erişiliyor; canlı liste yanıtı bekleniyor');
+  }).catch(e=>{
+   if(!ilkAnlikVeri)bulutDurum('☁ Sunucu testi başarısız: '+(e.code||e.message||'bilinmeyen hata'));
+  });
+ },13000);
+}catch(e){bulutDurum('☁ Bulut başlatılamadı: '+(e.code||e.message||'bilinmeyen hata'))}
 function mesafe(a,b){const R=6371e3,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 function imleriCiz(){if(!HARITA)return;IMLER.forEach(m=>m.remove());IMLER=[];for(const n in KONUM)if(gorunur(n))IMLER.push(L.marker(KONUM[n]).addTo(HARITA).bindTooltip(n,{permanent:true,direction:'top'}));const b=document.getElementById('durakBilgi');if(b)b.textContent=Object.keys(KONUM).length+' / '+DURAK_ADLARI.length+' durak işaretli'}
 function haritaKur(){if(HARITA){HARITA.remove();HARITA=null}const el=document.getElementById('harita');if(!el)return;if(!window.L){el.textContent='Harita yüklenemedi, internet var mı?';return}HARITA=L.map(el).setView([41.02,28.59],13);const kat={'Harita':L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap'}),'Harita 2':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:20,subdomains:'abcd',attribution:'© OpenStreetMap © CARTO'}),'Uydu':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})};kat['Harita'].addTo(HARITA);L.control.layers(kat).addTo(HARITA);HARITA.on('click',ev=>{if(!ADMIN)return;const n=document.getElementById('durakSec').value;if(!confirm(n+' buraya kaydedilsin mi?'))return;KONUM[n]=[ev.latlng.lat,ev.latlng.lng];durakKaydet();imleriCiz()});imleriCiz()}
