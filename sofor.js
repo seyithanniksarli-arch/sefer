@@ -344,8 +344,8 @@ const SAATY=()=>typeof saatYazi==='function'?saatYazi():'';
 function aktifGoster(p,s,el){
  const B=TB||simdi;
  let dep=null;
- for(const x of (TP||PLAN[p]||[])){const D=dur2(x,B);const son=x+D[D.length-1][1]*60+600;if(s>=x-15&&s<son&&!VARDI[x]){dep=x;break}}
- if(dep===null){AKT=null;return false}{const Dt=dur2(dep,TB||simdi),tr=Dt[Dt.length-1][1]*60;if(s-dep>=tr){AKT=null;el.innerHTML=aktKart('AKTİF SEFER',fmt(dep).slice(0,5)+' kalkış',sure2(s-dep),'Sefer tamamlandı',fmt(dep)+' seferi')+SAATY();return true}}AKT=dep;
+ for(const x of (TP||PLAN[p]||[])){const D=dur2(x,B);const LP=TP||PLAN[p]||[];const nx=LP[LP.indexOf(x)+1];const son=Math.min(x+D[D.length-1][1]*60+600,nx!==undefined?nx-300:1e9);if(s>=x-15&&s<son&&!VARDI[x]){dep=x;break}}
+ if(dep===null){AKT=null;return false}{const Dt=dur2(dep,TB||simdi),tr=Dt[Dt.length-1][1]*60;if(s-dep>=tr){AKT=null;const m=Math.floor(tr/60),sn=Math.round(tr%60);el.innerHTML=aktKart('AKTİF SEFER',fmt(dep).slice(0,5)+' kalkış',String(m).padStart(2,'0')+':'+String(sn).padStart(2,'0'),'Sefer tamamlandı',fmt(dep)+' seferi')+SAATY();return true}}AKT=dep;
  const D=dur2(dep,B),e=s-dep;
  let ad=B=='mur'?'Muratçeşme – kalkış':'Fatih Market – kalkış',hedef=dep;
  if(e>=0){const h=D.find(x=>(Math.floor(x[1])+1)*60>e)||D[D.length-1];ad=h[0];hedef=dep+h[1]*60}
@@ -359,7 +359,7 @@ function aktifGoster(p,s,el){
 }
 function takip(){
  const p=document.getElementById('benim').value.trim();
- if(!PLAN[p]){alert('Önce Hesapla tuşuna bas, plakanı listedeki gibi yaz');return}try{localStorage.setItem('benim',p);localStorage.setItem('benimHat',simdi)}catch(e){}TP=PLAN[p].slice();TB=simdi;MUR_CIKTI=false;MUR_SIFIRLANDI={};
+ if(!PLAN[p]){alert('Önce Hesapla tuşuna bas, plakanı listedeki gibi yaz');return}try{localStorage.setItem('benim',p);localStorage.setItem('benimHat',simdi)}catch(e){}TP=PLAN[p].slice();TB=simdi;
  try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume()}catch(e){}
  if(window.Notification&&Notification.permission=='default')Notification.requestPermission();
  if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});
@@ -512,7 +512,7 @@ function gorunur(n){return HF=='hepsi'||HATD[HF].includes(n)}
 function hfSec(){return '<select id="hatFilt" onchange="hatFiltre(this.value)" style="width:100%;font-size:18px;padding:10px;border-radius:8px;margin-bottom:6px">'+[['hepsi','Tüm duraklar'],['mim','Mimarsinan durakları'],['mur','Muratçeşme durakları']].map(x=>'<option value="'+x[0]+'"'+(x[0]==HF?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>'}
 function durakOpts(){const G=HF=='hepsi'?['mim','mur']:[HF];let h='';for(const b of G)h+='<optgroup label="'+(b=='mim'?'Mimarsinan':'Muratçeşme')+'">'+HATD[b].map(n=>'<option value="'+n+'">'+n+(KONUM[n]?' ✓':'')+'</option>').join('')+'</optgroup>';if(HF=='hepsi'){const D=DURAK_ADLARI.filter(n=>!HATD.mim.includes(n)&&!HATD.mur.includes(n));if(D.length)h+='<optgroup label="Diğer">'+D.map(n=>'<option value="'+n+'">'+n+'</option>').join('')+'</optgroup>'}return h}
 function hatFiltre(v){HF=v;try{localStorage.setItem('hf',v)}catch(e){}const s=document.getElementById('durakSec');if(s)s.innerHTML=durakOpts();imleriCiz()}
-let KONUM={},HARITA=null,IMLER=[],GPS=null,BENKONUM=null,MUR_CIKTI=false,MUR_SIFIRLANDI={};const VARDI={};
+let KONUM={},HARITA=null,IMLER=[],GPS=null,BENKONUM=null;const VARDI={};
 const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
 let FB=null,hazir=false;const GONDER={},BT={};
 function bulutDurum(m){const e=document.getElementById('bulut');if(e)e.textContent=m}
@@ -543,7 +543,7 @@ function durakSil(){const n=document.getElementById('durakSec').value;if(!KONUM[
 function durakKaydet(){if(FB)FB.collection('ayar').doc('duraklar').set({v:JSON.stringify(KONUM),z:Date.now()}).catch(e=>alert('Durak kaydedilemedi: '+e.code))}
 if(FB)FB.collection('ayar').doc('admin').onSnapshot(d=>{const x=d.data();if(x&&x.h){SIFRE_H=x.h;adminKontrol()}},e=>{});
 if(FB)FB.collection('ayar').doc('duraklar').onSnapshot(d=>{const x=d.data();if(x&&x.v){try{KONUM=JSON.parse(x.v);imleriCiz()}catch(e){}}},e=>{});
-function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];canliGonder(p);try{if(typeof ogrenKonum==='function')ogrenKonum(BENKONUM[0],BENKONUM[1])}catch(e){}if(TB==='mur'){const M=KONUM['Muratçeşme'];if(M){const d=mesafe(BENKONUM,M);if(d>50)MUR_CIKTI=true;else if(MUR_CIKTI){const n=ND(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();const dep=(TP||[]).find(x=>{const D=dur2(x,'mur');return s>=x-15&&s<x+D[D.length-1][1]*60+600});if(dep!==undefined){const gecen=s-dep;if(gecen>=45*60&&gecen<=55*60&&!MUR_SIFIRLANDI[dep]&&!VARDI[dep]){MUR_SIFIRLANDI[dep]=true;VARDI[dep]=1;MUR_CIKTI=false;AKT=null}else if(gecen>55*60)MUR_CIKTI=false}}}}const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
+function gpsBaslat(p){if(GPS!==null||!navigator.geolocation)return;GPS=navigator.geolocation.watchPosition(pos=>{BENKONUM=[pos.coords.latitude,pos.coords.longitude];canliGonder(p);try{if(typeof ogrenKonum==='function')ogrenKonum(BENKONUM[0],BENKONUM[1])}catch(e){}const A=KONUM['Atrium'];if(!A)return;if(mesafe(BENKONUM,A)>80)return;const n=new Date(),s=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();for(const x of (PLAN[p]||[]))if(s>x+40*60&&s<x+120*60)VARDI[x]=1},e=>{},{enableHighAccuracy:true,maximumAge:5000})}
 tarihSec(tarih,true);
 document.addEventListener('change',()=>kaydet());
 document.addEventListener('input',()=>kaydet());
