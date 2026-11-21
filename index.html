@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <title>Sefer Sırası</title>
 <link rel="icon" type="image/svg+xml" href="sofor-ikon.svg"><link rel="apple-touch-icon" href="sofor-ikon.png"><meta name="apple-mobile-web-app-title" content="Sefer Sırası">
-<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14212D" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="manifest" href="manifest-sofor.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,22 +25,8 @@
  --gol:rgba(14,27,42,.06);
  --tab-yuk:78px;--alt-boslugu:78px;
 }
-/* ===== Koyu tema: Aracım gece / Sıra gece ===== */
-@media (prefers-color-scheme: dark){
-:root{
- --zemin:#0B1620;--kart:#14212D;--cizgi:#26384A;--cizgi2:#203243;
- --yazi:#EAF1F7;--yazi2:#C3CFDA;--yazi3:#A9B8C6;--pasif:#6B7F91;--giris-kenar:#6B7F91;
- --yesil:#0F7A4F;--yesil-yazi:#4CC38A;
- --mavi:#1A5FB4;--mavi-yazi:#7DB1F2;--mavi-zemin:#1C3350;--tab-aktif:#8DBAF4;--nokta:#4D8FE0;--halka:#2B4F80;
- --kirmizi:#B3261E;--mur:#C62F29;--mur-kenar:#E0564E;--mur-yazi:#FF9A92;
- --turuncu:#F0A04B;--rozet:#DCE6F0;--rozet-yazi:#0E1B2A;
- --ok:#4CC38A;--uy:#F0A04B;--kt:#FF9A92;
- --uyari-zemin:#3B1F1D;--uyari-yazi:#FFB4AB;--bos-zemin:#33291A;
- --gol:rgba(0,0,0,.3);
-}
-}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;color-scheme:light dark}
+html{-webkit-text-size-adjust:100%;color-scheme:light only}
 body{margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--yazi);font-family:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.35}
 button{font-family:inherit;cursor:pointer}
 [hidden]{display:none!important}

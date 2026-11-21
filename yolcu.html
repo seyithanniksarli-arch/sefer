@@ -7,57 +7,94 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2314a467'/%3E%3Cstop offset='.55' stop-color='%230f8a57'/%3E%3Cstop offset='1' stop-color='%2316507e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='116' fill='url%28%23g%29'/%3E%3Cellipse cx='256' cy='430' rx='120' ry='26' fill='%2310202e' opacity='.25'/%3E%3Cpath d='M256 74c-92 0-160 68-160 156 0 108 160 214 160 214s160-106 160-214c0-88-68-156-160-156z' fill='%23fff'/%3E%3Cg transform='translate%28160 150%29'%3E%3Crect x='10' y='0' width='172' height='150' rx='34' fill='%230f8a57'/%3E%3Crect x='30' y='20' width='132' height='62' rx='12' fill='%23e6f6ee'/%3E%3Crect x='30' y='98' width='30' height='18' rx='9' fill='%23ffcf33'/%3E%3Crect x='132' y='98' width='30' height='18' rx='9' fill='%23ffcf33'/%3E%3Crect x='34' y='146' width='30' height='26' rx='8' fill='%2310202e'/%3E%3Crect x='128' y='146' width='30' height='26' rx='8' fill='%2310202e'/%3E%3C/g%3E%3Cg transform='translate%28392 118%29'%3E%3Ccircle r='54' fill='%23e74c3c' stroke='%23fff' stroke-width='12'/%3E%3Ccircle r='18' fill='%23fff'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icon-yolcu-192.png">
 <meta name="apple-mobile-web-app-title" content="Minibüs Nerede?">
-<meta name="theme-color" content="#0f8a57">
+<meta name="theme-color" content="#f4f6f8">
+<meta name="color-scheme" content="light">
 <link rel="manifest" href="manifest-yolcu.json">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root{--yesil:#1fa36a;--koyu:#0f8a57;--lac:#10202e;--mavi:#16507e;--sari:#ffcf33;--zemin:#eef2f5;--gri:#5b6b7a}
+:root{color-scheme:light;--yesil:#1fa36a;--koyu:#0f8a57;--lac:#10202e;--mavi:#16507e;--sari:#ffcf33;--zemin:#f4f6f8;--gri:#4d5d6b}
+html{color-scheme:light}
 body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;padding:0;overflow-x:hidden;background:var(--zemin);color:var(--lac);font-size:18px}
-.ust{background:linear-gradient(135deg,#0f8a57 0%,#1fa36a 45%,#16507e 100%);color:#fff;padding:22px 18px 52px;position:relative;overflow:hidden}
-.ust::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-24px;height:48px;background:var(--zemin);border-radius:50% 50% 0 0}
-.ust .ust1{display:flex;align-items:center;justify-content:space-between}
-.ust .ik{width:52px;height:52px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
-.ust .kod{background:var(--sari);color:var(--lac);font-weight:900;font-size:15px;padding:6px 11px;border-radius:9px;letter-spacing:.5px}
-.ust h1{font-size:34px;line-height:1;margin:16px 0 0;font-weight:900;letter-spacing:-.5px}
-.ust p{margin:8px 0 0;font-size:16px;font-weight:600;opacity:.93}
-.ic{padding:0 14px 24px;position:relative;z-index:1}
-.secim{background:#fff;border-radius:18px;padding:14px;box-shadow:0 2px 10px rgba(16,32,46,.08)}
-.secim small{display:block;font-size:12px;letter-spacing:2px;color:var(--yesil);font-weight:800;margin:0 2px 8px}
 select,button{font-family:inherit;font-size:19px;padding:14px;border-radius:12px;width:100%;box-sizing:border-box}
 select{border:1.5px solid #d5dde5;background:#fff;color:var(--lac);font-weight:700;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%231fa36a' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
 select:focus{outline:none;border-color:var(--yesil);box-shadow:0 0 0 3px rgba(31,163,106,.18)}
 button{border:0;background:var(--lac);color:#fff;font-weight:800;margin-top:10px}
-.kart{background:#fff;border-radius:18px;padding:14px 16px;margin:14px 0;box-shadow:0 2px 10px rgba(16,32,46,.08)}
-.hat{display:inline-block;font-size:14px;font-weight:800;padding:5px 12px;border-radius:20px;background:#e6effb;color:#1e63b8;margin-bottom:6px}
-.hat.mur{background:#fdeceb;color:#d33b34}
-.sat{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid #edf0f3}
-.hat+.sat{border-top:0}
-.plk{font-size:24px;font-weight:900}
-.dk{font-size:34px;font-weight:900;color:var(--yesil);min-width:110px;text-align:right;letter-spacing:-.5px}
-.dk.yakin{color:#e67e22}
-.dk.durakta{color:#0f8a57}
-.kucuk{font-size:14px;color:var(--gri);margin-top:2px}
-.canli{display:inline-block;background:#e74c3c;color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;animation:nabiz 1.6s infinite}
-@keyframes nabiz{50%{opacity:.55}}
-#harita{height:260px;border-radius:18px;margin-top:14px;box-shadow:0 2px 10px rgba(16,32,46,.08)}
-.bilgi{text-align:center;color:var(--gri);font-size:15px;margin:14px 6px}
+/* QR afiş sayfası (?qr) eski genel kuralları kullanır: değiştirme */
+.ust{background:linear-gradient(135deg,#0f8a57 0%,#1fa36a 45%,#16507e 100%);color:#fff;padding:22px 18px 52px;position:relative;overflow:hidden}
+.ust::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-24px;height:48px;background:var(--zemin);border-radius:50% 50% 0 0}
+.ust .ik{width:52px;height:52px;border-radius:15px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center}
+.ust .kod{background:var(--sari);color:var(--lac);font-weight:900;font-size:15px;padding:6px 11px;border-radius:9px;letter-spacing:.5px}
+.ust h1{font-size:34px;line-height:1;margin:16px 0 0;font-weight:900;letter-spacing:-.5px}
+.ust p{margin:8px 0 0;font-size:16px;font-weight:600;opacity:.93}
 .alt{background:var(--lac);color:#fff;text-align:center;padding:16px;font-size:14px;font-weight:600}
 .alt b{display:inline-block;background:var(--sari);color:var(--lac);padding:3px 9px;border-radius:7px;margin:4px 0 0;font-weight:900;white-space:nowrap}
+/* Yolcu sayfası: Temiz ve aydınlık */
+#ana{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;color:#10202e}
+.sy{max-width:480px;margin:0 auto}
+.bas{padding:24px 20px 8px;display:flex;flex-direction:column;gap:16px}
+.bas1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.marka1{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:44px;height:44px;border-radius:12px;background:#10202e;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bas h1{margin:0;font-size:26px;line-height:1.15;font-weight:800;letter-spacing:-.5px}
+.rozet{background:#ffcf33;color:#10202e;font-weight:800;font-size:13px;padding:6px 10px;border-radius:8px;flex-shrink:0}
+.secim{display:flex;gap:10px}
+.sec{flex:1;min-width:0;position:relative;min-height:56px;border:1.5px solid #cfd8e0;background:#fff;border-radius:14px;box-sizing:border-box}
+.sec:focus-within{outline:3px solid #1e63b8;outline-offset:2px}
+.sec-e{position:absolute;left:16px;top:9px;font-size:12px;font-weight:700;color:#4d5d6b;letter-spacing:.5px;pointer-events:none}
+.sec svg{position:absolute;right:16px;top:50%;margin-top:-10px;pointer-events:none}
+#durak{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;border:0;border-radius:14px;background:transparent;background-image:none;box-shadow:none;color:#10202e;font-size:19px;font-weight:800;padding:20px 44px 0 16px;text-overflow:ellipsis;cursor:pointer}
+#durak:focus{outline:none;border:0;box-shadow:none}
+.konum{width:56px;height:56px;min-height:56px;margin:0;padding:0;border:0;border-radius:14px;background:#10202e;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.konum:focus-visible{outline:3px solid #1e63b8;outline-offset:2px}
+.ic{padding:8px 20px 24px}
+#liste{display:flex;flex-direction:column;gap:12px}
+.kart{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 3px rgba(16,32,46,.1);display:flex;flex-direction:column;gap:6px}
+.k1{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 8px}
+.rz{font-size:13px;font-weight:800;border-radius:20px;padding:5px 12px;color:#1e63b8;background:#e6effb}
+.rz.mur{color:#c62f29;background:#fdeceb}
+.sa{font-size:13px;font-weight:700;color:#4d5d6b}
+.k2{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px}
+.pl{display:flex;align-items:center;gap:8px;min-width:0}
+.plk{font-size:26px;font-weight:800}
+.canli{background:#c62f29;color:#fff;font-size:12px;font-weight:800;letter-spacing:1px;padding:3px 8px;border-radius:8px;animation:nabiz 1.6s infinite}
+@keyframes nabiz{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.canli{animation:none}}
+.dk{font-size:21px;font-weight:800;color:#0b6a43;text-align:right;display:flex;align-items:baseline;justify-content:flex-end;gap:4px}
+.dk b{font-size:48px;line-height:1;font-weight:800;letter-spacing:-1px}
+.dk i{font-style:normal;font-size:20px;font-weight:800}
+.dk.yakin{color:#b34700}
+.dk.durakta{color:#0b7a4b}
+.metro{display:flex;align-items:center;gap:12px;background:#10202e;color:#fff;border-radius:16px;padding:14px 16px;min-height:44px;box-sizing:border-box}
+.metro svg{flex-shrink:0}
+.metro span{font-size:17px;font-weight:700}
+.metro em{font-style:normal;color:#ffcf33;font-weight:800}
+.bilgi{text-align:center;color:#4d5d6b;font-size:14px;font-weight:500;line-height:1.45;margin:12px 6px}
+#liste .bilgi{margin:8px 6px;font-size:15px}
+#harita{position:relative;z-index:0;height:240px;border-radius:16px;overflow:hidden;margin-top:12px;background:#e4ecf1}
+.marka{background:#10202e;color:#fff;text-align:center;padding:16px 20px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.marka .m1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font-size:14px;font-weight:700}
+.marka .m1 b{background:#ffcf33;color:#10202e;font-weight:800;padding:2px 8px;border-radius:6px}
+.marka .m2{font-size:13px;font-weight:500;color:#c3ced8}
 @media print{button{display:none}}
 </style>
 </head>
 <body>
 <div id="ana">
-<div class="ust"><div class="ust1"><div class="ik" style="background:none"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2314a467'/%3E%3Cstop offset='.55' stop-color='%230f8a57'/%3E%3Cstop offset='1' stop-color='%2316507e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='116' fill='url%28%23g%29'/%3E%3Cellipse cx='256' cy='430' rx='120' ry='26' fill='%2310202e' opacity='.25'/%3E%3Cpath d='M256 74c-92 0-160 68-160 156 0 108 160 214 160 214s160-106 160-214c0-88-68-156-160-156z' fill='%23fff'/%3E%3Cg transform='translate%28160 150%29'%3E%3Crect x='10' y='0' width='172' height='150' rx='34' fill='%230f8a57'/%3E%3Crect x='30' y='20' width='132' height='62' rx='12' fill='%23e6f6ee'/%3E%3Crect x='30' y='98' width='30' height='18' rx='9' fill='%23ffcf33'/%3E%3Crect x='132' y='98' width='30' height='18' rx='9' fill='%23ffcf33'/%3E%3Crect x='34' y='146' width='30' height='26' rx='8' fill='%2310202e'/%3E%3Crect x='128' y='146' width='30' height='26' rx='8' fill='%2310202e'/%3E%3C/g%3E%3Cg transform='translate%28392 118%29'%3E%3Ccircle r='54' fill='%23e74c3c' stroke='%23fff' stroke-width='12'/%3E%3Ccircle r='18' fill='%23fff'/%3E%3C/g%3E%3C/svg%3E" width="56" height="56" style="display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.2))"></div><div class="kod">BL-105</div></div><h1>Minibüs nerede?</h1><p>Kaç dakikada geleceğini hemen gör.</p></div>
+<div class="sy">
+<header class="bas"><div class="bas1"><div class="marka1"><div class="logo"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffcf33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="3"/><path d="M3 11h18M8 5v6M16 5v6"/><circle cx="8" cy="19" r="1.5"/><circle cx="16" cy="19" r="1.5"/></svg></div><h1>Minibüs nerede?</h1></div><span class="rozet">BL-105</span></div>
+<div class="secim"><div class="sec"><span class="sec-e">DURAK</span><select id="durak" aria-label="Durağını seç" onchange="durakSec(this.value)"></select><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10202e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+<button type="button" class="konum" aria-label="En yakın durağı bul" title="En yakın durağı bul" onclick="konumBul()"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button></div>
+</header>
 <div class="ic">
-<div class="secim"><small>DURAĞINI SEÇ</small><select id="durak" onchange="durakSec(this.value)"></select>
-<button onclick="konumBul()">📍 En yakın durağı bul</button></div>
 <div id="liste"><p class="bilgi">Yükleniyor...</p></div>
 <div id="harita"></div>
 <p class="bilgi">Süreler sefer planına göre hesaplanır. <span class="canli">CANLI</span> yazanlarda minibüsün gerçek konumu kullanılır.</p>
 </div>
-<div class="alt"><span style="white-space:nowrap">Ücretsiz · Uygulama indirmeye gerek yok</span> <b>BL-105</b><div style="margin-top:10px;font-size:13px;font-weight:600;opacity:.75">Seyithan Niksarlı tarafından geliştirildi</div></div>
+</div>
+<footer class="marka"><div class="m1"><span style="white-space:nowrap">Ücretsiz · Uygulama indirmeye gerek yok</span><b>BL-105</b></div><div class="m2">Seyithan Niksarlı tarafından geliştirildi</div></footer>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -73,6 +110,7 @@ mur:[['Muratçeşme',0,'g'],['Muratçeşme Sağlık Ocağı',1.5,'g'],['Hünkart
 const DURAKLAR=[];for(const b of ['mim','mur'])for(const x of HAT[b])if(!DURAKLAR.includes(x[0]))DURAKLAR.push(x[0]);
 const kk=n=>KK[n]||n;
 const HATAD={mim:'Mimarsinan hattı',mur:'Muratçeşme hattı'};
+const HATK={mim:'Mimarsinan',mur:'Muratçeşme'};
 const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
 const q=new URLSearchParams(location.search);
 let PLAN={mim:[],mur:[]},KONUM={},CANLI={},secili=q.get('durak')||'',HAR=null,IM=[],planVar=false;
@@ -125,12 +163,15 @@ function varis(hat,s,D,n){
 }
 function gelenler(hat,yon){
  const n=simdiSn(),L=[],E=HAT[hat].filter(x=>x[0]==secili&&x[2]==yon);if(!E.length)return [];
+ const M=yon=='g'?HAT[hat].find(x=>x[0]=='Metrobüs'&&x[2]=='g'):null;
  for(const [s,p,D] of PLAN[hat]||[]){
   for(const e of E){
-   let t=varis(hat,s,sKum(hat,D),e[1]);const c=canliBilgi(p,s);
-   if(c&&c.gec!=null&&e[1]>0)t+=Math.max(-60,c.gec);
+   const K=sKum(hat,D);let t=varis(hat,s,K,e[1]);const c=canliBilgi(p,s);
+   const gc=(c&&c.gec!=null&&e[1]>0)?Math.max(-60,c.gec):0;
+   t+=gc;
    if(n>=(Math.floor(t/60)+1)*60)continue;
-   L.push({t:t,p:p,c:!!c,yolda:n>=s});
+   let m=null;if(M&&M[1]>e[1])m=varis(hat,s,K,M[1])+gc;
+   L.push({t:t,p:p,c:!!c,yolda:n>=s,m:m});
   }
  }
  return L.sort((a,b)=>a.t-b.t).slice(0,3);
@@ -139,14 +180,15 @@ function ciz(){
  const el=document.getElementById('liste');if(!el)return;
  if(!secili){el.innerHTML='<p class="bilgi">Bulunduğun durağı seç ya da "En yakın durağı bul" tuşuna bas.</p>';return}
  if(!planVar){el.innerHTML='<p class="bilgi">Bugünün sefer listesi henüz girilmedi.</p>';return}
- const n=simdiSn();let h='',var_=false;
+ const n=simdiSn();let h='',var_=false,mt=null;
  for(const hat of ['mim','mur'])for(const yon of ['g','d']){
   const L=gelenler(hat,yon);if(!L.length)continue;var_=true;
-  h+='<div class="kart"><div class="hat '+hat+'">● '+HATAD[hat]+' · '+YON[hat][yon]+'</div>';
   for(const x of L){const d=x.t-n,k=d>120?Math.ceil(d/60):0;
-   h+='<div class="sat"><div><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'<div class="kucuk">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</div></div><div class="dk'+(k<=3?' yakin':'')+(d<=120?' durakta':'')+'">'+(d>120?k+' dk':d>0?'Geliyor / Durakta':'Durakta')+'</div></div>'}
-  h+='</div>';
+   if(x.m!=null&&(mt===null||x.t<mt.t))mt=x;
+   h+='<div class="kart"><div class="k1"><span class="rz '+hat+'">'+HATK[hat]+' · '+YON[hat][yon]+'</span><span class="sa">'+(x.yolda?'Yolda':'Henüz kalkmadı')+' · '+saat(x.t)+'</span></div>'+
+   '<div class="k2"><span class="pl"><span class="plk">'+x.p+'</span>'+(x.c?'<span class="canli">CANLI</span>':'')+'</span><div class="dk'+(k<=10?' yakin':'')+(d<=120?' durakta':'')+'">'+(d>120?'<b>'+k+'</b> <i>dk</i>':d>0?'Geliyor / Durakta':'Durakta')+'</div></div></div>'}
  }
+ if(mt){const mk=Math.max(1,Math.ceil((mt.m-n)/60));h+='<div class="metro"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffcf33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V6a2 2 0 012-2h10a2 2 0 012 2v10M5 16h14M5 16v2h3v-2M19 16v2h-3v-2M5 11h14"/></svg><span>Metrobüs\'e varış <em>'+mk+' dk</em></span></div>'}
  el.innerHTML=var_?h:'<p class="bilgi">Bu durağa bugün başka minibüs gelmiyor.</p>';
  haritaCanli();
 }
@@ -158,9 +200,9 @@ function haritaCiz(){
 }
 function haritaCanli(){
  if(!HAR)return;IM.forEach(m=>m.remove());IM=[];
- if(secili&&KONUM[kk(secili)])IM.push(L.circleMarker(KONUM[kk(secili)],{radius:10,color:'#2f6fd6',fillOpacity:.8}).addTo(HAR).bindTooltip(secili,{permanent:true,direction:'top'}));
+ if(secili&&KONUM[kk(secili)])IM.push(L.circleMarker(KONUM[kk(secili)],{radius:10,color:'#1e63b8',fillOpacity:.8}).addTo(HAR).bindTooltip(secili,{permanent:true,direction:'top'}));
  for(const p in CANLI){const c=CANLI[p];if(Date.now()-c.z>120000||c.lat==null)continue;
-  IM.push(L.marker([c.lat,c.lng],{icon:L.divIcon({html:'<div style="background:#e74c3c;color:#fff;font-weight:bold;border-radius:10px;padding:3px 7px;font-size:14px;white-space:nowrap">🚐 '+p+'</div>',className:'',iconAnchor:[30,12]})}).addTo(HAR))}
+  IM.push(L.marker([c.lat,c.lng],{icon:L.divIcon({html:'<div style="background:#c62f29;color:#fff;font-weight:800;border-radius:10px;padding:3px 8px;font-size:14px;white-space:nowrap">🚐 '+p+'</div>',className:'',iconAnchor:[30,12]})}).addTo(HAR))}
 }
 function qrSayfa(){
  const KOD='BL-105';
