@@ -89,11 +89,52 @@ var TAKIP_EL_DURDU=false;
  // elle durdurulduysa sayfa yeniden çizilince takip kendiliğinden geri başlamasın
  try{if(typeof otoTakip==='function'){var oto0=otoTakip;otoTakip=function(){if(TAKIP_EL_DURDU)return;return oto0.apply(this,arguments)}}}catch(e){}
 
+
+ // --- Sıra sekmesi: "Her aracın son seferi" / "Tüm seferler" alt sekmeleri
+ window.sonucSek=function(k){
+  if(k!=='tum')k='son';
+  var s=$('sonuc');if(s)s.className='g-'+k;
+  ['son','tum'].forEach(function(x){var b=$('ss_'+x);if(b){b.className=x===k?'aktif':'';b.setAttribute('aria-selected',x===k?'true':'false')}});
+  try{localStorage.setItem('sonucSek',k)}catch(e){}
+ };
+ try{sonucSek(localStorage.getItem('sonucSek')||'son')}catch(e){sonucSek('son')}
+
+ // --- Aracım: plaka yazılınca durak (hat) kendiliğinden bulunur, istenirse elle değiştirilir
+ var DURAK_ELLE=false,sonPlk=null,sonAnahtar='',durakMsj='';
+ function hatAdi(h){try{return (h=='mur'?MUR:MIM).ad}catch(e){return h=='mur'?'Muratçeşme':'Mimarsinan'}}
+ function hatBul(p){var r=[];['mim','mur'].forEach(function(h){try{if(durum[h]&&(durum[h].plakalar||'').split(/[\s,;]+/).indexOf(p)>=0)r.push(h)}catch(e){}});return r}
+ function durakYaz(){
+  try{['mim','mur'].forEach(function(h){var b=$('ds_'+h);if(b){b.className=h===simdi?'aktif':'';b.setAttribute('aria-pressed',h===simdi?'true':'false')}});
+   var n=$('durakNot');if(n&&n.textContent!==durakMsj)n.textContent=durakMsj}catch(e){}
+ }
+ function durakOto(){
+  try{
+   var p=(($('benim')||{}).value||'').trim();
+   if(p!==sonPlk){sonPlk=p;DURAK_ELLE=false;sonAnahtar=''}
+   if(!p){durakMsj='';durakYaz();return}
+   if(DURAK_ELLE){durakMsj='Durak elle seçildi.';durakYaz();return}
+   var L=hatBul(p),an=p+'|'+L.join(',');
+   if(an!==sonAnahtar){
+    sonAnahtar=an;
+    if(L.length===1&&L[0]!==simdi&&!takipT){sekme(L[0]);try{localStorage.setItem('benimHat',L[0])}catch(e){}}
+   }
+   durakMsj=L.length===1?'Durak kendiliğinden bulundu: '+hatAdi(L[0])+'. Yanlışsa yukarıdan değiştir.':L.length>1?'Plakan iki durakta da var, durağı seç.':'Plakan bugünkü listelerde yok, durağı elle seçebilirsin.';
+   durakYaz();
+  }catch(e){}
+ }
+ window.durakElle=function(h){
+  if(h!=='mur')h='mim';
+  DURAK_ELLE=true;
+  if(h!==simdi)sekme(h);
+  try{localStorage.setItem('benimHat',h)}catch(e){}
+  durakMsj='Durak elle seçildi.';durakYaz();
+ };
+
  // sayfa yeniden çizilince / plan yeniden hesaplanınca karolar hemen güncellensin
  try{var ciz1=ciz;ciz=function(){var r=ciz1.apply(this,arguments);siraKaro();return r}}catch(e){}
  try{var hes1=hesapla;hesapla=function(){var r=hes1.apply(this,arguments);siraKaro();return r}}catch(e){}
  // plaka değişince karolar ve durum yenilensin
- function yenile(){siraKaro();durumYaz()}
+ function yenile(){siraKaro();durumYaz();durakOto()}
  document.addEventListener('input',function(){setTimeout(yenile,0)});
  document.addEventListener('change',function(){setTimeout(yenile,0)});
  setInterval(yenile,1000);

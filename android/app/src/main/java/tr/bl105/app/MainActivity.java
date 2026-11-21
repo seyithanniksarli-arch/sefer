@@ -3,6 +3,11 @@ package tr.bl105.app;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -50,6 +56,57 @@ public class MainActivity extends Activity {
 
     private static final String RETRY_SCHEME = "bl105retry";
     private static final int REQ_PERMS = 105;
+    private static final String UYARI_KANAL = "bl105_uyari";
+    private int uyariNo = 2000;
+
+    /** Sayfadaki JS'nin sistem bildirimi gostermesi icin (orn. yeni telefon kayit istegi). */
+    private class Kopru {
+        @JavascriptInterface
+        public void bildir(final String baslik, final String metin) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bildirimGoster(baslik, metin);
+                }
+            });
+        }
+    }
+
+    private void bildirimGoster(String baslik, String metin) {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel ch = new NotificationChannel(
+                    UYARI_KANAL, "Yönetici uyarıları", NotificationManager.IMPORTANCE_HIGH);
+            ch.enableVibration(true);
+            nm.createNotificationChannel(ch);
+        }
+        Intent open = new Intent(this, MainActivity.class);
+        open.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= 23) {
+            piFlags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pi = PendingIntent.getActivity(this, 1, open, piFlags);
+        Notification.Builder b = Build.VERSION.SDK_INT >= 26
+                ? new Notification.Builder(this, UYARI_KANAL)
+                : new Notification.Builder(this);
+        b.setContentTitle(baslik == null ? "" : baslik)
+                .setContentText(metin == null ? "" : metin)
+                .setSmallIcon(R.drawable.ic_stat)
+                .setAutoCancel(true)
+                .setContentIntent(pi);
+        if (Build.VERSION.SDK_INT < 26) {
+            b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
+        }
+        nm.notify(uyariNo++, b.build());
+    }
 
     private WebView webView;
     private boolean showingError = false;
@@ -102,6 +159,8 @@ public class MainActivity extends Activity {
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
         s.setTextZoom(100);
+
+        webView.addJavascriptInterface(new Kopru(), "BL105Native");
 
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setBackgroundColor(0xFFEEF2F5);
