@@ -383,18 +383,55 @@ function tarihGun(){const g=new Date(tarih+'T12:00').getDay();return g==6?'cmt':
 function gunOf(b){return (durum[b]&&durum[b].gun)||tarihGun()}
 function dbOku(){try{return JSON.parse(localStorage.getItem('sefer_db')||'{}')}catch(e){return {}}}
 function kaydet(){try{oku();const db=dbOku();db[tarih]={mim:durum.mim,mur:durum.mur,mevsim:mevsim};const s='0000';for(const k in db)if(k<s)delete db[k];localStorage.setItem('sefer_db',JSON.stringify(db))}catch(e){}}
-function tarihSec(v,ilk){if(!v)return;if(!ilk)kaydet();tarih=v;const k=dbOku()[v];for(const b of ['mim','mur'])durum[b]=k&&k[b]?k[b]:{plakalar:'',tur:{},ariza:{},ortak:{}};if(k&&k.mevsim)mevsim=k.mevsim;gun=gunOf(simdi);gunButon();document.getElementById('tarih').value=v;ciz()}
+function tarihSec(v,ilk){if(!v)return;if(!ilk)kaydet();tarih=v;const k=gunNormal(dbOku()[v]);for(const b of ['mim','mur'])durum[b]=k&&k[b]?k[b]:{plakalar:'',tur:{},ariza:{},ortak:{}};if(k&&k.mevsim)mevsim=k.mevsim;gun=gunOf(simdi);gunButon();document.getElementById('tarih').value=v;ciz()}
 function veriKopyala(){
  kaydet();const s=JSON.stringify(dbOku());
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(()=>alert('Kopyalandı. WhatsApp ile kendine gönder, telefonda Verileri yapıştır de.')).catch(()=>prompt('Bu yazının hepsini kopyala:',s))}
  else prompt('Bu yazının hepsini kopyala:',s);
 }
+// Bir günün kaydını (elle, WhatsApp'tan, ChatGPT'den ya da buluttan gelmiş olabilir) uygulamanın beklediği biçime getirir.
+// Eksik/yanlış tipli alanları varsayılanla doldurur; onarılamayacak girişte null döner.
+function gunNormal(g){
+ if(typeof g==='string'){try{g=JSON.parse(g)}catch(e){return null}}
+ if(!g||typeof g!=='object'||Array.isArray(g))return null;
+ const o={};
+ if(g.mevsim==='yaz'||g.mevsim==='kis')o.mevsim=g.mevsim;
+ if(g.gun==='hi'||g.gun==='cmt'||g.gun==='paz')o.gun=g.gun;
+ const nesne=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
+ const harita=(x,deger)=>{if(Array.isArray(x)){const r={};x.forEach(p=>{if(p!==null&&p!==undefined&&String(p).trim())r[String(p).trim()]=deger});return r}return Object.assign({},nesne(x))};
+ for(const b of ['mim','mur']){
+  const h=nesne(g[b]);let pl=h.plakalar;
+  if(Array.isArray(pl))pl=pl.map(x=>String(x==null?'':x).trim()).filter(x=>x).join(' ');
+  else if(typeof pl==='number')pl=String(pl);
+  else if(typeof pl!=='string')pl='';
+  const r=Object.assign({},h,{plakalar:pl,tur:harita(h.tur,'nobetci'),ariza:harita(h.ariza,true),ortak:harita(h.ortak,true),yok:nesne(h.yok)});
+  for(const k in r.tur)if(typeof r.tur[k]!=='string')delete r.tur[k];
+  if(h.yokEk!==undefined)r.yokEk=nesne(h.yokEk);
+  for(const k of ['sabah','bant','uzat'])if(r[k]!==undefined&&!Array.isArray(r[k]))delete r[k];
+  o[b]=r;
+ }
+ for(const k in g)if(!(k in o)&&k!=='mim'&&k!=='mur'&&k!=='mevsim'&&k!=='gun')o[k]=g[k];
+ if(typeof g.uzatYok==='boolean')o.uzatYok=g.uzatYok;
+ return o;
+}
 function veriYapistir(){
  const s=prompt('Kopyaladığın veriyi buraya yapıştır:');if(!s)return;
- let y;try{y=JSON.parse(s)}catch(e){alert('Veri okunamadı, tamamını kopyaladığından emin ol.');return}
- const db=dbOku();for(const k in y)db[k]=y[k];
+ let y;try{y=JSON.parse(String(s).trim().replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim())}catch(e){alert('Veri okunamadı, tamamını kopyaladığından emin ol.');return}
+ if(y&&typeof y==='object'){for(const w of ['sefer_db','gunler','db'])if(y[w]&&typeof y[w]==='object'&&!Array.isArray(y[w])){y=y[w];break}}
+ if(!y||typeof y!=='object'||Array.isArray(y)){alert('Veri okunamadı: gün kayıtları bulunamadı.');return}
+ if(y.mim||y.mur){const t0={};t0[tarih]=y;y=t0}
+ const db=dbOku();let say=0,atla=[];
+ for(const k in y){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(k)){atla.push(k);continue}
+  const g=gunNormal(y[k]);if(!g){atla.push(k);continue}
+  db[k]=g;say++;
+ }
+ if(!say){alert('Geçerli gün kaydı bulunamadı (anahtar 2026-11-17 biçiminde olmalı).');return}
  localStorage.setItem('sefer_db',JSON.stringify(db));
- for(const k in y)bulutaGonder(k);tarihSec(tarih,true);alert(Object.keys(y).length+' günlük kayıt eklendi.');
+ for(const k in y)if(db[k]&&/^\d{4}-\d{2}-\d{2}$/.test(k)){bekleyenEkle(k);bulutaGonder(k)}
+ tarihSec(tarih,true);
+ try{const d=document.querySelector('details[data-k="sira"]');if(d&&typeof ADMIN!=='undefined'&&ADMIN&&durum[simdi].plakalar){d.open=true;ACIK.sira=1;localStorage.setItem('acik',JSON.stringify(ACIK))}}catch(e){}
+ alert(say+' günlük kayıt eklendi.'+(atla.length?' Atlanan: '+atla.slice(0,5).join(', ')+(atla.length>5?'…':''):''));
 }
 function ciz(){
  const a=ayar(),d=durum[simdi];
@@ -516,25 +553,65 @@ let KONUM={},HARITA=null,IMLER=[],GPS=null,BENKONUM=null;const VARDI={};
 const FBC={apiKey:"AIzaSyDMcP2Sd_6Y7OukKsowNTWxwJggs3oOn8w",authDomain:"sefer-ca13e.firebaseapp.com",projectId:"sefer-ca13e",storageBucket:"sefer-ca13e.firebasestorage.app",messagingSenderId:"706047335288",appId:"1:706047335288:web:e1f1c1d838db32cad9468d"};
 let FB=null,hazir=false;const GONDER={},BT={};
 function bulutDurum(m){const e=document.getElementById('bulut');if(e)e.textContent=m}
+// Henüz buluta gidememiş yerel düzenlemeler: {gün: düzenleme zamanı}. İlk sunucu görüntüsünde yalnızca bunlar korunur.
+function bekleyenOku(){try{const x=JSON.parse(localStorage.getItem('bekleyenGunler')||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch(e){return {}}}
+function bekleyenYaz(b){try{localStorage.setItem('bekleyenGunler',JSON.stringify(b))}catch(e){}}
+function bekleyenEkle(k){const b=bekleyenOku();b[k]=Date.now();bekleyenYaz(b)}
+function bekleyenSil(k,z){const b=bekleyenOku();if(k in b&&(z===undefined||b[k]<=z)){delete b[k];bekleyenYaz(b)}}
+function gunVarMi(g){return !!(g&&((g.mim&&g.mim.plakalar)||(g.mur&&g.mur.plakalar)))}
 function bulutaGonder(k){
- if(!FB||!hazir)return;const g=dbOku()[k];if(!g)return;
- if(!(g.mim&&g.mim.plakalar)&&!(g.mur&&g.mur.plakalar))return;
- const v=JSON.stringify(g);if(GONDER[k]===v)return;GONDER[k]=v;
- FB.collection('gunler').doc(k).set({v:v,z:Date.now()}).then(()=>bulutDurum('☁ Kaydedildi, bütün cihazlar görüyor')).catch(e=>{delete GONDER[k];bulutDurum('☁ Kaydedilemedi: '+e.code)});
+ if(!FB||!hazir)return;const g=dbOku()[k];if(!gunVarMi(g)){bekleyenSil(k);return}
+ const v=JSON.stringify(g);if(GONDER[k]===v){bekleyenSil(k);return}GONDER[k]=v;
+ const bz=bekleyenOku()[k];
+ FB.collection('gunler').doc(k).set({v:v,z:Date.now()}).then(()=>{if(bz!==undefined)bekleyenSil(k,bz);bulutDurum('☁ Kaydedildi, bütün cihazlar görüyor')}).catch(e=>{delete GONDER[k];bulutDurum('☁ Kaydedilemedi: '+(e.code||'hata'))});
 }
 const kaydet0=kaydet;
-kaydet=function(){kaydet0();const k=tarih;clearTimeout(BT[k]);BT[k]=setTimeout(()=>bulutaGonder(k),1500)};
+kaydet=function(){
+ const k=tarih;let once='';try{once=JSON.stringify(dbOku()[k]||null)}catch(e){}
+ kaydet0();
+ let sonra='';try{sonra=JSON.stringify(dbOku()[k]||null)}catch(e){}
+ // yalnızca gerçekten değişen ve gönderilecek içeriği olan gün "bekleyen" sayılır; sadece gezmek/açmak günü buluta basmaz
+ if(once!==sonra&&gunVarMi(dbOku()[k]))bekleyenEkle(k);
+ clearTimeout(BT[k]);BT[k]=setTimeout(()=>{if(k in bekleyenOku())bulutaGonder(k)},1500);
+};
 try{
  firebase.initializeApp(FBC);FB=firebase.firestore();bulutDurum('☁ Bağlanıyor...');
- FB.collection('gunler').onSnapshot(sn=>{
-  const db=dbOku();let yenile=false;
-  sn.docChanges().forEach(c=>{if(c.type=='removed')return;const x=c.doc.data(),id=c.doc.id;if(!x||!x.v||GONDER[id]===x.v)return;try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}});
+ let ilkVeri=false;
+ const zamanAsimi=setTimeout(()=>{if(!ilkVeri)bulutDurum('☁ Yanıt bekleniyor…')},12000);
+ FB.collection('gunler').onSnapshot({includeMetadataChanges:true},sn=>{
+  // Önbellekten gelen görüntü sunucu değildir: esas alma, buluta geri basma.
+  if(sn.metadata.fromCache){if(!hazir)bulutDurum('☁ Sunucu verisi bekleniyor…');return}
+  ilkVeri=true;clearTimeout(zamanAsimi);
+  const ilk=!hazir,eski=dbOku(),db=ilk?{}:Object.assign({},eski),gonder=[];let yenile=false;
+  if(ilk){
+   // İlk sunucu görüntüsü ESASTIR: Firebase'de olmayan yerel gün atılır. Tek istisna: bu cihazda yapılıp
+   // buluta gidememiş (bekleyen) ve sunucudaki sürümden yeni düzenlemeler.
+   const sz={};
+   sn.docs.forEach(d=>{const x=d.data();if(!x||!x.v)return;try{const g=gunNormal(x.v);if(g){db[d.id]=g;sz[d.id]=x.z||0;GONDER[d.id]=x.v}}catch(e){}});
+   const bek=bekleyenOku();
+   for(const k in bek){
+    const y=gunNormal(eski[k]);
+    if(gunVarMi(y)&&(!(k in sz)||bek[k]>sz[k])){db[k]=y;gonder.push(k)}else delete bek[k];
+   }
+   bekleyenYaz(bek);
+   yenile=JSON.stringify(eski[tarih]||null)!==JSON.stringify(db[tarih]||null);
+  }else{
+   const bek=bekleyenOku();
+   sn.docChanges().forEach(c=>{
+    const id=c.doc.id;
+    if(c.type=='removed'){if(id in bek)gonder.push(id);else{delete db[id];delete GONDER[id];if(id==tarih)yenile=true}return}
+    const x=c.doc.data();if(!x||!x.v||GONDER[id]===x.v)return;
+    if(id in bek&&bek[id]>(x.z||0))return;
+    try{const g=gunNormal(x.v);if(g){db[id]=g;GONDER[id]=x.v;bekleyenSil(id);if(id==tarih)yenile=true}}catch(e){}
+   });
+  }
   localStorage.setItem('sefer_db',JSON.stringify(db));
-  if(!hazir){hazir=true;const bul=new Set(sn.docs.map(d=>d.id));for(const k in db)if(!bul.has(k))bulutaGonder(k)}
+  if(ilk)hazir=true;
+  gonder.forEach(k=>{delete GONDER[k];bulutaGonder(k)});
   const ae=document.activeElement;
   if(yenile&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))tarihSec(tarih,true);
   bulutDurum('☁ Bağlı – '+sn.size+' gün kayıtlı');
- },e=>bulutDurum('☁ Bağlanamadı: '+e.code));
+ },e=>{clearTimeout(zamanAsimi);bulutDurum('☁ Bağlantı hatası: '+(e.code||'bilinmeyen'))});
 }catch(e){bulutDurum('☁ Bulut yüklenemedi, internet var mı?')}
 function mesafe(a,b){const R=6371e3,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 function imleriCiz(){if(!HARITA)return;IMLER.forEach(m=>m.remove());IMLER=[];for(const n in KONUM)if(gorunur(n))IMLER.push(L.marker(KONUM[n]).addTo(HARITA).bindTooltip(n,{permanent:true,direction:'top'}));const b=document.getElementById('durakBilgi');if(b)b.textContent=Object.keys(KONUM).length+' / '+DURAK_ADLARI.length+' durak işaretli'}
