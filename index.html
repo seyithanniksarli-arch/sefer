@@ -117,11 +117,11 @@ body[data-sekme=aracim] #aksiyon{display:block}
 .hat-sek{display:flex;gap:10px}
 .hat-sek button{flex:1;min-height:48px;border-radius:12px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--kart)}
 .hat-sek .nk{width:10px;height:10px;border-radius:50%}
-#bMim{border:2px solid var(--mavi-yazi);color:var(--mavi-yazi)}#bMim .nk{background:var(--mavi-yazi)}
-#bMim.aktif{background:var(--mavi);border-color:var(--mavi);color:#fff}
-#bMur{border:2px solid var(--mur-kenar);color:var(--mur-yazi)}#bMur .nk{background:var(--mur-kenar)}
-#bMur.aktif{background:var(--mur);border-color:var(--mur);color:#fff}
-#bMim.aktif .nk,#bMur.aktif .nk{background:#fff}
+.hat-sek button[data-hat=mim]{border:2px solid var(--mavi-yazi);color:var(--mavi-yazi)}.hat-sek button[data-hat=mim] .nk{background:var(--mavi-yazi)}
+.hat-sek button[data-hat=mim].aktif{background:var(--mavi);border-color:var(--mavi);color:#fff}
+.hat-sek button[data-hat=mur]{border:2px solid var(--mur-kenar);color:var(--mur-yazi)}.hat-sek button[data-hat=mur] .nk{background:var(--mur-kenar)}
+.hat-sek button[data-hat=mur].aktif{background:var(--mur);border-color:var(--mur);color:#fff}
+.hat-sek button.aktif .nk{background:#fff!important}
 .mini{display:flex;gap:6px;margin-top:10px}
 .mini button{flex:1;min-width:0;min-height:40px;border:1.5px solid var(--cizgi);border-radius:10px;background:var(--kart);color:var(--yazi2);font-size:14px;font-weight:700;padding:0 4px}
 .mini button.aktif{background:var(--mavi-zemin);border-color:var(--tab-aktif);color:var(--tab-aktif);font-weight:800}
@@ -136,7 +136,33 @@ body[data-sekme=aracim] #aksiyon{display:block}
 .et.tur{background:transparent;color:var(--yazi3);border:1px solid var(--cizgi);padding:1px 7px}
 .kr.ariza-k{opacity:.7}
 .tarih-kutu label{margin:0 0 6px}
+.bolum-ust{margin:0 0 12px}
 #tarih{width:100%;font-size:18px;padding:10px;border-radius:10px}
+/* ===== Alt sekmeler (Sıra ve Daha fazla içinde) ===== */
+.altsek{display:flex;gap:4px;overflow-x:auto;margin:0 0 14px;padding:4px;background:var(--cizgi2);border-radius:14px;scrollbar-width:none}
+.altsek::-webkit-scrollbar{display:none}
+.altsek button{flex:1 0 auto;min-height:42px;border:0;border-radius:10px;background:transparent;color:var(--yazi2);font-size:14px;font-weight:700;padding:0 12px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
+.altsek button[aria-current=true]{background:var(--kart);color:var(--tab-aktif);font-weight:800;box-shadow:0 1px 3px var(--gol)}
+.alt-pan{display:none}
+#sek_sira[data-alt=sira] [data-p=sira],#sek_sira[data-alt=son] [data-p=son],#sek_sira[data-alt=tum] [data-p=tum],
+#sek_daha[data-alt=sira] [data-p=sira],#sek_daha[data-alt=ayar] [data-p=ayar],#sek_daha[data-alt=saat] [data-p=saat],#sek_daha[data-alt=tel] [data-p=tel],#sek_daha[data-alt=diger] [data-p=diger]{display:block}
+body[data-admin="0"] .sadmin{display:none}
+.rz{background:var(--kirmizi);color:#fff;border-radius:20px;font-size:12px;font-weight:800;padding:1px 8px;min-width:20px;text-align:center}
+#alt button{position:relative}
+#alt .nokta-rz{position:absolute;top:6px;left:calc(50% + 8px);width:12px;height:12px;border-radius:50%;background:var(--kirmizi);border:2px solid var(--kart)}
+.hesap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;margin:0 0 12px}
+.hesap-bil{min-width:0;display:flex;flex-direction:column;gap:2px}
+.hesap-bil b{font-size:17px;font-weight:800}
+.hesap-cik{flex-shrink:0;min-height:44px;padding:0 16px;border:1.5px solid var(--kirmizi);border-radius:12px;background:var(--kart);color:var(--kirmizi);font-size:15px;font-weight:800}
+/* ===== Aracım: durak seçimi ===== */
+.durak-sat{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.durak-sat .hat-sek button{min-height:40px;font-size:14px;border-radius:10px;border-width:1.5px}
+.durak-not{margin:0;font-size:13px;font-weight:600;color:var(--yazi3)}
+.durak-not.uyari{color:var(--kirmizi)}
+.tel-toast{position:fixed;left:12px;right:12px;top:max(12px,env(safe-area-inset-top,0px));z-index:10000;max-width:576px;margin:0 auto;background:var(--yazi);color:#fff;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:15px;font-weight:700}
+.tel-toast span{flex:1;min-width:0}
+.tel-toast button{flex-shrink:0;min-height:40px;border:0;border-radius:10px;padding:0 12px;font-size:14px;font-weight:800;background:var(--rozet);color:var(--rozet-yazi)}
+.tel-toast button.k{background:transparent;color:#fff;opacity:.8;padding:0 8px;font-size:20px}
 /* ===== Formlar ===== */
 textarea,select,input[type=date],input[type=time],input[type=number],input:not([type]),input[type=text]{font-family:inherit;color:var(--yazi);background:var(--zemin);border:1.5px solid var(--giris-kenar);border-radius:10px}
 textarea{width:100%;font-size:20px;padding:10px}
@@ -151,7 +177,7 @@ button.ana{padding:16px;font-family:inherit;font-size:19px;font-weight:800;backg
 table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;font-size:16px;background:var(--kart);border-radius:12px;overflow:hidden;border:1px solid var(--cizgi)}
 th{background:var(--mavi-zemin);color:var(--tab-aktif);text-align:left;font-weight:800}
 th,td{padding:10px 8px;border-bottom:1px solid var(--cizgi2);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-#sonuc,#carpi{overflow-x:auto}
+#sonSefer,#tumSeferler,#carpi{overflow-x:auto}
 @media (max-width:380px){table{font-size:14px}th,td{padding:8px 5px}}
 tr.uyari td{background:var(--uyari-zemin)}
 tr.bos td{background:var(--bos-zemin)}
@@ -192,39 +218,98 @@ span[style*="#d33b34"]{background:var(--kirmizi)!important}
    <button type="button" id="takipDugme" class="takip-dugme" onclick="takipDugme()"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span id="takipYazi">Takibi başlat</span></button>
   </div>
   <p id="takipDurum" role="status" class="durum"><i aria-hidden="true"></i><span>Takip kapalı</span></p>
+  <div class="durak-sat">
+   <div class="hat-sek" role="group" aria-label="Durak">
+    <button type="button" data-hat="mim" class="aktif" onclick="durakEl('mim')"><span class="nk"></span>Mimarsinan</button>
+    <button type="button" data-hat="mur" onclick="durakEl('mur')"><span class="nk"></span>Muratçeşme</button>
+   </div>
+   <p class="durak-not" id="durakNot" role="status">Plakanı yazınca durağın kendiliğinden bulunur.</p>
+  </div>
  </div></div>
  <div class="sar aracim-ic"><div id="sayac"></div><p class="imza">Seyithan Niksarlı tarafından geliştirildi</p></div>
 </section>
 <!-- ===== SIRA ===== -->
-<section id="sek_sira" class="sek" aria-label="Sıra">
+<section id="sek_sira" class="sek" data-alt="sira" aria-label="Sıra">
  <div class="sar">
-  <div class="hat-sek" role="tablist" aria-label="Hat">
-   <button id="bMim" class="aktif" role="tab" onclick="sekme('mim')"><span class="nk"></span>Mimarsinan</button>
-   <button id="bMur" role="tab" onclick="sekme('mur')"><span class="nk"></span>Muratçeşme</button>
+  <div class="altsek" role="tablist" aria-label="Sıra bölümleri">
+   <button type="button" id="sa_sira" role="tab" aria-current="true" onclick="siraAlt('sira')">Sıra</button>
+   <button type="button" id="sa_son" role="tab" onclick="siraAlt('son')">Her aracın son seferi</button>
+   <button type="button" id="sa_tum" role="tab" onclick="siraAlt('tum')">Tüm seferler</button>
   </div>
-  <div class="mini" id="gunSec">
-   <button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
-   <button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
-   <button id="g_paz" onclick="gunSec('paz')">Pazar</button>
+  <div class="hat-sek" role="group" aria-label="Hat" style="margin-bottom:14px">
+   <button type="button" data-hat="mim" class="aktif" onclick="sekme('mim')"><span class="nk"></span>Mimarsinan</button>
+   <button type="button" data-hat="mur" onclick="sekme('mur')"><span class="nk"></span>Muratçeşme</button>
   </div>
-  <div class="mini" id="mevsimSec">
-   <button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
-   <button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
+  <div class="alt-pan" data-p="sira">
+   <section aria-label="Araç sırası">
+    <div class="bas"><h2 id="siraBaslik">Mimarsinan sırası</h2><span id="siraSay"></span></div>
+    <div id="plakaKaro" class="karolar"></div>
+    <p class="kucuk" id="siraNot" style="margin:10px 2px 0">Sırayı kahya belirler.</p>
+    <p class="kucuk" id="siraTarih" style="margin:4px 2px 0"></p>
+   </section>
   </div>
-  <section aria-label="Araç sırası" style="margin-top:18px">
-   <div class="bas"><h2 id="siraBaslik">Mimarsinan sırası</h2><span id="siraSay"></span></div>
-   <div id="plakaKaro" class="karolar"></div>
-   <p class="kucuk" id="siraNot" style="margin:10px 2px 0">Sırayı kahya belirler.</p>
-  </section>
-  <div class="kutu tarih-kutu" style="margin-top:16px"><label for="tarih">Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)"></div>
+  <div class="alt-pan" data-p="son">
+   <div class="bas"><h2>Her aracın son seferi</h2><span class="hat-gun"></span></div>
+   <div id="sonSefer"></div>
+  </div>
+  <div class="alt-pan" data-p="tum">
+   <div class="bas"><h2>Tüm seferler</h2><span class="hat-gun"></span></div>
+   <div id="tumSeferler"></div>
+  </div>
  </div>
 </section>
 <!-- ===== SEFERLER ===== -->
 <section id="sek_seferler" class="sek" aria-label="Seferler"><div class="sar"><div id="alanSeferler"></div></div></section>
 <!-- ===== DAHA FAZLA ===== -->
-<section id="sek_daha" class="sek" aria-label="Daha fazla"><div class="sar">
- <div id="alanDaha"></div>
- <details class="bolum" data-k="veri"><summary>Veriler</summary><p class="kucuk">Bu cihazdaki günlük kayıtları kopyala ya da başka cihazdan yapıştır.</p><div class="aks2"><button style="background:var(--mavi)" onclick="veriKopyala()">Verileri kopyala</button><button style="background:var(--yesil)" onclick="veriYapistir()">Verileri yapıştır</button></div></details>
+<section id="sek_daha" class="sek" data-alt="sira" aria-label="Daha fazla"><div class="sar">
+ <div id="hesap" class="kutu hesap"></div>
+ <div class="altsek" role="tablist" aria-label="Daha fazla bölümleri">
+  <button type="button" id="dt_sira" role="tab" aria-current="true" onclick="dahaAlt('sira')">Sıra ve araçlar</button>
+  <button type="button" id="dt_ayar" role="tab" onclick="dahaAlt('ayar')">Sıra ayarları</button>
+  <button type="button" id="dt_saat" role="tab" class="sadmin" onclick="dahaAlt('saat')">Sefer saatleri</button>
+  <button type="button" id="dt_tel" role="tab" class="sadmin" onclick="dahaAlt('tel')">Telefonlar <span class="rz" id="dt_tel_rz" hidden></span></button>
+  <button type="button" id="dt_diger" role="tab" onclick="dahaAlt('diger')">Diğer</button>
+ </div>
+ <!-- Sıra ve araçlar: tarih çubuğu en üstte -->
+ <div class="alt-pan" data-p="sira">
+  <section class="kutu" aria-label="Sıra ve araçlar">
+   <div class="bas"><h2>Sıra ve araçlar</h2></div>
+   <div class="tarih-kutu bolum-ust"><label for="tarih">Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)"></div>
+   <div id="alanSira" data-k="sira"></div>
+  </section>
+ </div>
+ <!-- Sıra ayarları: durak, gün, mevsim -->
+ <div class="alt-pan" data-p="ayar">
+  <section class="kutu" aria-label="Sıra ayarları">
+   <div class="bas"><h2>Sıra ayarları</h2></div>
+   <label style="margin-top:0">Durak</label>
+   <div class="hat-sek" role="group" aria-label="Durak" style="margin-top:6px">
+    <button type="button" data-hat="mim" class="aktif" onclick="sekme('mim')"><span class="nk"></span>Mimarsinan</button>
+    <button type="button" data-hat="mur" onclick="sekme('mur')"><span class="nk"></span>Muratçeşme</button>
+   </div>
+   <label>Gün</label>
+   <div class="mini" id="gunSec" style="margin-top:6px">
+    <button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
+    <button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
+    <button id="g_paz" onclick="gunSec('paz')">Pazar</button>
+   </div>
+   <label>Mevsim</label>
+   <div class="mini" id="mevsimSec" style="margin-top:6px">
+    <button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
+    <button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
+   </div>
+   <p class="kucuk" style="margin:12px 0 0">Bu seçimler Sıra, Seferler ve hesap tablolarını etkiler.</p>
+  </section>
+ </div>
+ <!-- Sefer saatleri (yönetici) -->
+ <div class="alt-pan" data-p="saat"><div id="alanSaat"></div></div>
+ <!-- Telefonlar (yönetici) -->
+ <div class="alt-pan" data-p="tel"><div id="alanTel"></div></div>
+ <!-- Diğer -->
+ <div class="alt-pan" data-p="diger">
+  <div id="alanDiger"></div>
+  <details class="bolum" data-k="veri"><summary>Veriler</summary><p class="kucuk">Bu cihazdaki günlük kayıtları kopyala ya da başka cihazdan yapıştır.</p><div class="aks2"><button style="background:var(--mavi)" onclick="veriKopyala()">Verileri kopyala</button><button style="background:var(--yesil)" onclick="veriYapistir()">Verileri yapıştır</button></div></details>
+ </div>
  <div id="bulut" class="kucuk" style="text-align:center;margin:14px 0 0"></div>
  <p class="imza">Seyithan Niksarlı tarafından geliştirildi · BL-105</p>
 </div></section>
@@ -239,7 +324,7 @@ span[style*="#d33b34"]{background:var(--kirmizi)!important}
  <button type="button" id="t_aracim" aria-current="page" onclick="altSekme('aracim')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2.5"/><path d="M4 11h16M8 17v3M16 17v3"/><path d="M8 14h.01M16 14h.01"/></svg>Aracım</button>
  <button type="button" id="t_sira" onclick="altSekme('sira')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Sıra</button>
  <button type="button" id="t_seferler" onclick="altSekme('seferler')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Seferler</button>
- <button type="button" id="t_daha" onclick="altSekme('daha')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/></svg>Daha fazla</button>
+ <button type="button" id="t_daha" onclick="altSekme('daha')"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/></svg><i class="nokta-rz" id="dahaRz" hidden></i>Daha fazla</button>
 </div></nav>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
