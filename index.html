@@ -174,23 +174,6 @@ button[style*="#eaf6f0"]{background:var(--mavi-zemin)!important;color:var(--tab-
 div[style*="color:#0f8a57"]{color:var(--yesil-yazi)!important}
 span[style*="#d33b34"]{background:var(--kirmizi)!important}
 @media (max-width:359px){.ust h1{font-size:21px}.rozet{font-size:13px;padding:6px 8px}.takip-dugme{font-size:15px}#aksiyon button{font-size:15px}.plaka-sat .pl{width:96px}}
-/* ===== Sıra: sefer tablosu alt sekmeleri ===== */
-.alt-sek{display:flex;gap:6px;margin-bottom:10px}
-.alt-sek button{flex:1;min-width:0;min-height:44px;border:1.5px solid var(--cizgi);border-radius:10px;background:var(--kart);color:var(--yazi2);font-size:15px;font-weight:700;padding:4px 6px}
-.alt-sek button.aktif{background:var(--mavi-zemin);border-color:var(--tab-aktif);color:var(--tab-aktif);font-weight:800}
-#sonuc h3{display:none}
-#sonuc.g-son table:nth-of-type(2),#sonuc.g-tum table:nth-of-type(1){display:none}
-#sonuc table{width:100%}
-/* ===== Aracım: durak seçimi ===== */
-.durak-sat{display:flex;align-items:center;gap:10px;margin-top:12px}
-.ds-et{font-size:14px;font-weight:800;color:var(--yazi3)}
-.ds-bt{display:flex;gap:6px;flex:1}
-.ds-bt button{flex:1;min-width:0;min-height:40px;border-radius:10px;border:1.5px solid var(--cizgi);background:var(--kart);color:var(--yazi2);font-size:15px;font-weight:700}
-.ds-bt button.aktif{background:var(--mavi-zemin);border-color:var(--tab-aktif);color:var(--tab-aktif);font-weight:800}
-.ds-not{margin:6px 0 0;font-size:13px;color:var(--yazi3)}.ds-not:empty{display:none}
-/* ===== Hesabım ===== */
-.cikis-bt{width:100%;min-height:52px;border:0;border-radius:12px;background:var(--kirmizi);color:#fff;font-size:17px;font-weight:800;margin-top:10px}
-#bildirimBant{position:fixed;left:12px;right:12px;top:12px;z-index:10000;background:#16507e;color:#fff;border-radius:14px;padding:14px 16px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:16px}
 @media print{#alt,#aksiyon{display:none!important}}
 </style>
 </head>
@@ -208,8 +191,6 @@ span[style*="#d33b34"]{background:var(--kirmizi)!important}
    <div class="pl"><label for="benim">Plakan</label><input id="benim" type="text" inputmode="numeric" autocomplete="off" placeholder="örn. 03"></div>
    <button type="button" id="takipDugme" class="takip-dugme" onclick="takipDugme()"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span id="takipYazi">Takibi başlat</span></button>
   </div>
-  <div class="durak-sat" id="durakSat"><span class="ds-et">Durak</span><div class="ds-bt"><button type="button" id="ds_mim" onclick="durakElle('mim')">Mimarsinan</button><button type="button" id="ds_mur" onclick="durakElle('mur')">Muratçeşme</button></div></div>
-  <p id="durakNot" class="ds-not"></p>
   <p id="takipDurum" role="status" class="durum"><i aria-hidden="true"></i><span>Takip kapalı</span></p>
  </div></div>
  <div class="sar aracim-ic"><div id="sayac"></div><p class="imza">Seyithan Niksarlı tarafından geliştirildi</p></div>
@@ -221,27 +202,6 @@ span[style*="#d33b34"]{background:var(--kirmizi)!important}
    <button id="bMim" class="aktif" role="tab" onclick="sekme('mim')"><span class="nk"></span>Mimarsinan</button>
    <button id="bMur" role="tab" onclick="sekme('mur')"><span class="nk"></span>Muratçeşme</button>
   </div>
-  <section aria-label="Araç sırası" style="margin-top:18px">
-   <div class="bas"><h2 id="siraBaslik">Mimarsinan sırası</h2><span id="siraSay"></span></div>
-   <div id="plakaKaro" class="karolar"></div>
-   <p class="kucuk" id="siraNot" style="margin:10px 2px 0">Sırayı kahya belirler.</p>
-  </section>
-  <section class="kutu sonuc-kutu" aria-label="Seferler tablosu" style="margin-top:16px">
-   <div class="alt-sek" role="tablist">
-    <button type="button" id="ss_son" class="aktif" role="tab" onclick="sonucSek('son')">Her aracın son seferi</button>
-    <button type="button" id="ss_tum" role="tab" onclick="sonucSek('tum')">Tüm seferler</button>
-   </div>
-   <div id="sonuc" class="g-son"></div>
-   <div class="aks2"><button style="background:var(--mavi)" onclick="excel()">Excel olarak indir</button><button style="background:var(--kirmizi)" onclick="pdf()">PDF / Yazdır</button></div>
-  </section>
- </div>
-</section>
-<!-- ===== SEFERLER ===== -->
-<section id="sek_seferler" class="sek" aria-label="Seferler"><div class="sar"><div id="alanSeferler"></div></div></section>
-<!-- ===== DAHA FAZLA ===== -->
-<section id="sek_daha" class="sek" aria-label="Daha fazla"><div class="sar">
- <div id="alanDaha"></div>
- <details class="bolum" data-k="param" id="parBolum"><summary>Gün ve mevsim</summary><p class="kucuk" style="margin-top:0">Seferlerin hesaplandığı gün türü ve mevsim.</p>
   <div class="mini" id="gunSec">
    <button id="g_hi" onclick="gunSec('hi')">Hafta içi</button>
    <button id="g_cmt" onclick="gunSec('cmt')">Cumartesi</button>
@@ -251,8 +211,19 @@ span[style*="#d33b34"]{background:var(--kirmizi)!important}
    <button id="m_yaz" onclick="mevsimSec('yaz')">Yaz – 8 nöbetçi</button>
    <button id="m_kis" onclick="mevsimSec('kis')">Kış – 7 nöbetçi</button>
   </div>
- </details>
- <details class="bolum" data-k="hesap" id="hesapBolum"><summary>Hesabım</summary><div id="hesapIc"></div></details>
+  <section aria-label="Araç sırası" style="margin-top:18px">
+   <div class="bas"><h2 id="siraBaslik">Mimarsinan sırası</h2><span id="siraSay"></span></div>
+   <div id="plakaKaro" class="karolar"></div>
+   <p class="kucuk" id="siraNot" style="margin:10px 2px 0">Sırayı kahya belirler.</p>
+  </section>
+  <div class="kutu tarih-kutu" style="margin-top:16px"><label for="tarih">Tarih</label><input type="date" id="tarih" onchange="tarihSec(this.value)"></div>
+ </div>
+</section>
+<!-- ===== SEFERLER ===== -->
+<section id="sek_seferler" class="sek" aria-label="Seferler"><div class="sar"><div id="alanSeferler"></div></div></section>
+<!-- ===== DAHA FAZLA ===== -->
+<section id="sek_daha" class="sek" aria-label="Daha fazla"><div class="sar">
+ <div id="alanDaha"></div>
  <details class="bolum" data-k="veri"><summary>Veriler</summary><p class="kucuk">Bu cihazdaki günlük kayıtları kopyala ya da başka cihazdan yapıştır.</p><div class="aks2"><button style="background:var(--mavi)" onclick="veriKopyala()">Verileri kopyala</button><button style="background:var(--yesil)" onclick="veriYapistir()">Verileri yapıştır</button></div></details>
  <div id="bulut" class="kucuk" style="text-align:center;margin:14px 0 0"></div>
  <p class="imza">Seyithan Niksarlı tarafından geliştirildi · BL-105</p>

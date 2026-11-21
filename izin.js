@@ -5,11 +5,7 @@ var CIHAZ='',CKOD='',IZ={d:'bilinmiyor',plaka:'',istek:''},CLIST={},KIL=null,KIL
   CKOD=localStorage.getItem('ckod')||'';if(!CKOD){CKOD=String(1000+Math.floor(Math.random()*9000));localStorage.setItem('ckod',CKOD)}
   if(localStorage.getItem('onayli')=='1')IZ.d='onay';IZ.plaka=localStorage.getItem('cplaka')||''}catch(e){CIHAZ=CIHAZ||'gecici';CKOD=CKOD||'0000'}
 })();
-var CIKIS=false;try{CIKIS=localStorage.getItem('cikis')=='1'}catch(e){}
-function izinli(){
- if(ADMIN&&CIKIS){CIKIS=false;try{localStorage.removeItem('cikis')}catch(e){}}
- return ADMIN||(IZ.d=='onay'&&!CIKIS);
-}
+function izinli(){return ADMIN||IZ.d=='onay'}
 function cModel(){const u=navigator.userAgent;return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':'Bilgisayar'}
 
 // --- açılışta sofor.js'nin kendiliğinden başlattığı takibi durdur, izin gelince yeniden başlar
@@ -25,8 +21,7 @@ function kapiCiz(){
  const logo='<img src="sofor-ikon.svg" width="76" height="76" style="display:block;margin:0 auto 18px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.25))" onerror="this.remove()">';
  const kod='<div style="font-size:15px;font-weight:700;opacity:.85;margin-top:18px">Telefon kodu</div><div style="font-size:64px;font-weight:900;letter-spacing:10px;background:#ffcf33;color:#10202e;border-radius:18px;padding:6px 10px 6px 20px;display:inline-block;margin-top:8px">'+CKOD+'</div>';
  let ic='';
- if(CIKIS&&IZ.d=='onay')ic='<h2 style="font-size:28px;margin:0">Hoş geldin</h2><p style="opacity:.92;font-size:17px;line-height:1.45">Bu telefon kayıtlı'+(IZ.plaka?' (plaka '+IZ.plaka+')':'')+'. Girmek için dokun.</p><button onclick="girisYap()" style="font-family:inherit;font-size:22px;font-weight:800;border:0;border-radius:14px;padding:18px 22px;background:#fff;color:#0f8a57;width:100%;margin-top:10px">Giriş yap</button>';
- else if(IZ.d=='bilinmiyor')ic='<h2 style="font-size:28px;margin:0">Kontrol ediliyor…</h2><p style="opacity:.9">İnternet bağlantını kontrol et.</p>';
+ if(IZ.d=='bilinmiyor')ic='<h2 style="font-size:28px;margin:0">Kontrol ediliyor…</h2><p style="opacity:.9">İnternet bağlantını kontrol et.</p>';
  else if(IZ.d=='bekliyor')ic='<h2 style="font-size:28px;margin:0">Onay bekleniyor</h2>'+(IZ.istek?'<p style="font-size:20px;font-weight:800;margin:10px 0 0">İstenen plaka: '+IZ.istek+'</p>':'')+'<p style="opacity:.92;font-size:17px;line-height:1.45">İsteğin gönderildi. Yöneticiye bu kodu söyle. Onaylayınca uygulama kendiliğinden açılır.</p>'+kod;
  else ic='<h2 style="font-size:28px;margin:0">Bu telefon kayıtlı değil</h2><p style="opacity:.92;font-size:17px;line-height:1.45">Şoför uygulamasını sadece yöneticinin onayladığı telefonlar kullanabilir.</p><input id="istekPl" inputmode="numeric" placeholder="Plakan (örn. 72)" style="font-family:inherit;font-size:24px;font-weight:800;text-align:center;border:0;border-radius:14px;padding:14px;width:100%;box-sizing:border-box;color:#10202e;margin-top:6px"><button onclick="onayIste()" style="font-family:inherit;font-size:20px;font-weight:800;border:0;border-radius:14px;padding:16px 22px;background:#fff;color:#0f8a57;width:100%;margin-top:8px">Onay iste</button>'+kod;
  k.innerHTML='<div style="max-width:380px;width:100%;text-align:center">'+logo+ic+'<div style="margin-top:28px"><button onclick="adminGir()" style="font-family:inherit;background:none;border:0;color:#fff;opacity:.7;font-size:15px;text-decoration:underline">Yönetici girişi</button></div><div style="margin-top:22px;font-size:12px;opacity:.6">Seyithan Niksarlı tarafından geliştirildi · BL-105</div></div>';
@@ -36,68 +31,6 @@ function onayIste(){
  const ip=document.getElementById('istekPl'),ist=((ip&&ip.value)||'').trim().toUpperCase();
  if(!ist){alert('Önce plakanı yaz.');if(ip)ip.focus();return}
  FB.collection('cihazlar').doc(CIHAZ).set({kod:CKOD,onay:false,plaka:'',istek:ist,model:cModel(),z:Date.now()}).then(()=>{IZ.d='bekliyor';IZ.istek=ist;kapiCiz()}).catch(e=>alert('Gönderilemedi: '+e.code));
-}
-function girisYap(){
- CIKIS=false;try{localStorage.removeItem('cikis')}catch(e){}
- try{TAKIP_EL_DURDU=false}catch(e){}
- kapiCiz();if(izinli()){benimDoldur();try{ciz()}catch(e){}if(!takipT)setTimeout(otoTakip,0)}
-}
-function cikisYap(){
- if(!confirm('Hesabından çıkış yapılsın mı? Takip durur. Tekrar girmek için "Giriş yap" tuşuna basman yeterli.'))return;
- const p=KIL||((document.getElementById('benim')||{}).value||'').trim();
- try{if(KIL)kilitBirak(KIL)}catch(e){}
- try{clearInterval(takipT);takipT=null;TP=null;gpsDur();if(KILDIN)KILDIN();KILDIN=null;clearInterval(KILHB);KIL=null}catch(e){}
- try{AKT=null;const sy=document.getElementById('sayac');if(sy)sy.innerHTML=''}catch(e){}
- try{if(FB&&p)FB.collection('canli').doc(p).delete().catch(()=>{})}catch(e){}
- try{if(navigator.vibrate)navigator.vibrate(0)}catch(e){}
- if(CLDIN){try{CLDIN()}catch(e){}CLDIN=null}
- ADMIN=false;try{localStorage.removeItem('admin')}catch(e){}
- CIKIS=true;try{localStorage.setItem('cikis','1')}catch(e){}
- try{if(typeof altSekme==='function')altSekme('aracim')}catch(e){}
- try{ciz()}catch(e){}
- kapiCiz();
-}
-function hesapYaz(){
- const el=document.getElementById('hesapIc');if(!el)return;
- const pl=IZ.plaka||((document.getElementById('benim')||{}).value||'').trim();
- const h='<p class="kucuk" style="margin-top:0">Telefon kodu: <b>'+CKOD+'</b>'+(pl?' · Plaka: <b>'+pl+'</b>':'')+(ADMIN?' · <b>Yönetici girişi açık</b>':'')+'</p>'+
-  '<p class="kucuk">Çıkış yapınca bu telefonun kaydı silinmez; tekrar girerken onay beklemezsin.</p>'+
-  (ADMIN?'<label style="display:flex;gap:10px;align-items:center;font-size:16px;margin:8px 0"><input type="checkbox" id="bildirimAc" style="width:24px;height:24px" onchange="bildirimAyar(this.checked)"'+(bildirimAcik()?' checked':'')+'>Yeni telefon kayıt isteklerinde bildirim gönder</label>':'')+
-  '<button type="button" class="cikis-bt" onclick="cikisYap()">Çıkış yap</button>';
- if(el.dataset.h!==h){el.innerHTML=h;el.dataset.h=h}
-}
-
-// --- yönetici: yeni telefon kayıt isteği bildirimi (yönetici girişi olan her cihazda)
-function bildirimAcik(){try{return localStorage.getItem('bildirimKapali')!=='1'}catch(e){return true}}
-function bildirimAyar(a){try{if(a)localStorage.removeItem('bildirimKapali');else localStorage.setItem('bildirimKapali','1')}catch(e){}if(a)bildirimIzni()}
-function bildirimIzni(){try{if(window.Notification&&Notification.permission=='default')Notification.requestPermission()}catch(e){}}
-function bildir(baslik,metin,etiket){
- try{if(window.BL105Native&&BL105Native.bildir){BL105Native.bildir(baslik,metin);}
-  else if(window.Notification&&Notification.permission=='granted'){
-   const o={body:metin,tag:etiket||'tel',icon:'icon-sofor-192.png',badge:'icon-sofor-192.png',renotify:true,vibrate:[300,150,300]};
-   if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)navigator.serviceWorker.getRegistration().then(r=>{if(r&&r.showNotification)r.showNotification(baslik,o);else new Notification(baslik,o)}).catch(()=>{try{new Notification(baslik,o)}catch(e){}});
-   else new Notification(baslik,o);
-  }}catch(e){}
- try{let b=document.getElementById('bildirimBant');if(!b){b=document.createElement('div');b.id='bildirimBant';b.setAttribute('role','alert');b.onclick=()=>{b.remove();try{altSekme('daha');const t=document.querySelector('details[data-k="tel"]');if(t){t.open=true;t.scrollIntoView({block:'start'})}}catch(e){}};document.body.appendChild(b)}
-  b.innerHTML='📱 '+baslik+'<div style="font-weight:600;font-size:14px;margin-top:4px">'+metin+' · Görmek için dokun</div>';
-  clearTimeout(b._t);b._t=setTimeout(()=>{try{b.remove()}catch(e){}},12000)}catch(e){}
- try{if(navigator.vibrate)navigator.vibrate([300,150,300])}catch(e){}
- try{if(typeof bip==='function')bip(1100,0.3)}catch(e){}
-}
-var BILDIRILEN={};
-function yeniIstekKontrol(ilk){
- if(!ADMIN||!bildirimAcik())return;
- let son=0;try{son=+localStorage.getItem('sonIstekZ')||0}catch(e){}
- let enYeni=son;
- for(const id in CLIST){
-  const x=CLIST[id];if(!x||x.onay||id===CIHAZ||BILDIRILEN[id+':'+(x.z||0)])continue;
-  BILDIRILEN[id+':'+(x.z||0)]=1;
-  if((x.z||0)<=son)continue;
-  enYeni=Math.max(enYeni,x.z||0);
-  if(ilk&&Date.now()-(x.z||0)>86400000)continue;
-  bildir('Yeni telefon kayıt isteği','Kod '+(x.kod||'----')+(x.istek?' · istenen plaka '+x.istek:'')+(x.model?' · '+x.model:''),'tel_'+id);
- }
- try{if(enYeni>son)localStorage.setItem('sonIstekZ',String(enYeni))}catch(e){}
 }
 function izinDegisti(eski){
  try{localStorage.setItem('onayli',IZ.d=='onay'?'1':'0');localStorage.setItem('cplaka',IZ.plaka||'')}catch(e){}
@@ -150,8 +83,7 @@ takip=async function(){
 // --- yönetici: telefonlar listesi
 function cihazListesiDinle(){
  if(CLDIN||!FB)return;
- let ilk=true;bildirimIzni();
- CLDIN=FB.collection('cihazlar').onSnapshot(sn=>{CLIST={};sn.forEach(d=>{CLIST[d.id]=d.data()});telBolumYenile();yeniIstekKontrol(ilk);ilk=false},()=>{});
+ CLDIN=FB.collection('cihazlar').onSnapshot(sn=>{CLIST={};sn.forEach(d=>{CLIST[d.id]=d.data()});telBolumYenile()},()=>{});
 }
 function adminCihazKaydet(){
  if(ADMKAYIT||!FB)return;ADMKAYIT=true;
@@ -193,8 +125,7 @@ function telSil(id){
 
 // --- ekran her çizildiğinde
 const ciz0=ciz;
-ciz=function(){ciz0();if(ADMIN){adminCihazKaydet();cihazListesiDinle();telBolumYenile()}benimDoldur();kapiCiz();hesapYaz()};
+ciz=function(){ciz0();if(ADMIN){adminCihazKaydet();cihazListesiDinle();telBolumYenile()}benimDoldur();kapiCiz()};
 if(ADMIN){adminCihazKaydet();cihazListesiDinle();telBolumYenile()}
 kapiCiz();
-hesapYaz();setInterval(hesapYaz,2000);
-if(izinli()){benimDoldur();setTimeout(otoTakip,0)}
+if(ADMIN||IZ.d=='onay'){benimDoldur();setTimeout(otoTakip,0)}
