@@ -530,12 +530,36 @@ try{
  const baglantiZamanAsimi=setTimeout(()=>{
   if(!ilkAnlikVeri)bulutDurum('☁ Yanıt bekleniyor… Sunucuya erişim testi yapılıyor');
  },12000);
- FB.collection('gunler').onSnapshot(sn=>{
+ FB.collection('gunler').onSnapshot({includeMetadataChanges:true},sn=>{
+  // Önbellek eski/eksik olabilir. Yerel veriyi yalnızca sunucudan gelen tam
+  // görüntü ulaştığında eşitle; önbelleği hiçbir zaman Firebase'e geri basma.
+  if(sn.metadata.fromCache){
+   bulutDurum('☁ Sunucu verisi bekleniyor…');
+   return;
+  }
   ilkAnlikVeri=true;clearTimeout(baglantiZamanAsimi);
-  const db=dbOku();let yenile=false;
-  sn.docChanges().forEach(c=>{if(c.type=='removed')return;const x=c.doc.data(),id=c.doc.id;if(!x||!x.v||GONDER[id]===x.v)return;try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}});
+  const ilkYukleme=!hazir;
+  const db=ilkYukleme?{}:dbOku();let yenile=false;
+  if(ilkYukleme){
+   // İlk sunucu görüntüsü otoritedir: cihazdaki eski/yerel günler korunmaz.
+   sn.docs.forEach(d=>{
+    const x=d.data(),id=d.id;
+    if(!x||!x.v)return;
+    try{db[id]=JSON.parse(x.v);if(id==tarih)yenile=true}catch(e){}
+   });
+  }else{
+   // Sonraki değişiklikleri uygula; buluttan silinen belgeyi yerelden de sil.
+   sn.docChanges().forEach(c=>{
+    const id=c.doc.id;
+    if(c.type=='removed'){delete db[id];if(id==tarih)yenile=true;return}
+    const x=c.doc.data();
+    if(!x||!x.v)return;
+    if(GONDER[id]===x.v)return;
+    try{db[id]=JSON.parse(x.v);GONDER[id]=x.v;if(id==tarih)yenile=true}catch(e){}
+   });
+  }
   localStorage.setItem('sefer_db',JSON.stringify(db));
-  if(!hazir){hazir=true;const bul=new Set(sn.docs.map(d=>d.id));for(const k in db)if(!bul.has(k))bulutaGonder(k)}
+  if(ilkYukleme)hazir=true;
   const ae=document.activeElement;
   if(yenile&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))tarihSec(tarih,true);
   bulutDurum('☁ Bağlı – '+sn.size+' gün kayıtlı');
