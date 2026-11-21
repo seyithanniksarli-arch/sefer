@@ -1,6 +1,6 @@
 // BL-105 basit service worker: kabuk onbellegi, html/js icin ag-oncelikli.
 // Surum degisince CACHE adini artir.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'bl105-kabuk-' + VERSION;
 const KABUK = [
   './', 'index.html', 'yolcu.html',
@@ -49,6 +49,19 @@ self.addEventListener('fetch', function (e) {
         if (r.mode === 'navigate') return caches.match('index.html');
         return Response.error();
       });
+    })
+  );
+});
+
+// Bildirime dokununca uygulamayi ac / one getir (yonetici: yeni telefon kayit istegi)
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if ('focus' in list[i]) return list[i].focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });
